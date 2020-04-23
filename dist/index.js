@@ -1254,7 +1254,9 @@ module.exports = /******/ (function(modules, runtime) {
       const install_otp_1 = __webpack_require__(473);
       async function run() {
         try {
-          await install_otp_1.installOTP("22.3");
+          const otpVersion = core_1.getInput("otp-version");
+          core_1.debug(`otp-version: ${otpVersion}`);
+          await install_otp_1.installOTP(otpVersion);
         } catch (error) {
           core_1.setFailed(error.message);
         }
