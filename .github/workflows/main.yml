@@ -1,0 +1,15 @@
+on: [push]
+
+jobs:
+  setup-otp:
+    runs-on: ubuntu-latest
+    name: A job to setup otp
+    steps:
+      # To use this repository's private action, you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup OTP action step
+        uses: ./ # Uses an action in the root directory
+        id: setup-otp
+        with:
+          otp-version: "22.3"

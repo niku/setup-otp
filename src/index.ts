@@ -1,3 +1,13 @@
-import { hi } from "./friendly-greeting";
+import { getInput, setFailed } from "@actions/core";
+import { installOTP } from "./install-otp";
 
-console.log(hi());
+async function run(): Promise<void> {
+  try {
+    const otpVersion = getInput("otp-version");
+    await installOTP(otpVersion);
+  } catch (error) {
+    setFailed(error.message);
+  }
+}
+
+run();
