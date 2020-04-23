@@ -11,4 +11,6 @@ async function run(): Promise<void> {
   }
 }
 
+debug("begin run()");
 run();
+debug("end run()");

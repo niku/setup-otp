@@ -1261,7 +1261,9 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.setFailed(error.message);
         }
       }
+      core_1.debug("begin run()");
       run();
+      core_1.debug("end run()");
 
       /***/
     },
