@@ -1,4 +1,5 @@
 import { debug } from "@actions/core";
+import { exec } from "@actions/exec";
 import { downloadTool, extractTar } from "@actions/tool-cache";
 import * as fs from "fs";
 
@@ -42,6 +43,11 @@ async function downloadTarGz(version: string): Promise<string> {
 }
 
 async function compile(extractedDirectory: string): Promise<void> {
+  await exec("./otp_build", ["autoconf"], { cwd: extractedDirectory });
+  await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"], { cwd: extractedDirectory });
+  await exec("make", [], { cwd: extractedDirectory });
+  await exec("make", ["release"], { cwd: extractedDirectory });
+  await exec("ls", ["-l"], { cwd: extractedDirectory });
   return;
 }
 

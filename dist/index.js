@@ -1621,6 +1621,7 @@ module.exports = /******/ (function(modules, runtime) {
         };
       Object.defineProperty(exports, "__esModule", { value: true });
       const core_1 = __webpack_require__(470);
+      const exec_1 = __webpack_require__(986);
       const tool_cache_1 = __webpack_require__(533);
       const fs = __importStar(__webpack_require__(747));
       class VersionDidNotMatch extends Error {
@@ -1658,6 +1659,11 @@ module.exports = /******/ (function(modules, runtime) {
         return tool_cache_1.downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
       }
       async function compile(extractedDirectory) {
+        await exec_1.exec("./otp_build", ["autoconf"], { cwd: extractedDirectory });
+        await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"], { cwd: extractedDirectory });
+        await exec_1.exec("make", [], { cwd: extractedDirectory });
+        await exec_1.exec("make", ["release"], { cwd: extractedDirectory });
+        await exec_1.exec("ls", ["-l"], { cwd: extractedDirectory });
         return;
       }
       async function installOTP(spec) {
