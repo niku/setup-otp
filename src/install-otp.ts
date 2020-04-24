@@ -46,22 +46,22 @@ async function compile(extractedDirectory: string): Promise<void> {
 }
 
 export async function installOTP(spec: string): Promise<void> {
-  debug("starting: downloadVersionsText()");
+  debug("Starting: downloadVersionsText()");
   const versionsTextPath = await downloadVersionsText();
-  debug(`starting: readText(${versionsTextPath})`);
+  debug(`Starting: readText(${versionsTextPath})`);
   const versionsText = await readText(versionsTextPath);
-  debug(`starting: parseVersions(${versionsText})`);
+  debug(`Starting: parseVersions(${versionsText})`);
   const versions = parseVersions(versionsText);
-  debug(`starting: getReleasedVersion(${versions},${spec})`);
+  debug(`Starting: getReleasedVersion(${versions},${spec})`);
   const version = getReleasedVersion(versions, spec);
   if (!version) {
     throw new VersionDidNotMatch(versions, spec);
   }
-  debug(`starting: downloadTarGz(${version})`);
+  debug(`Starting: downloadTarGz(${version})`);
   const tarGzPath = await downloadTarGz(version);
-  debug(`starting: extractTar(${tarGzPath})`);
+  debug(`Starting: extractTar(${tarGzPath})`);
   const extractedDirectory = await extractTar(tarGzPath);
-  debug(`starting: compile(${extractedDirectory})`);
+  debug(`Starting: compile(${extractedDirectory})`);
   await compile(extractedDirectory);
   return;
 }

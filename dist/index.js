@@ -1255,7 +1255,7 @@ module.exports = /******/ (function(modules, runtime) {
       async function run() {
         try {
           const otpVersion = core_1.getInput("otp-version");
-          core_1.debug(`starting: installOTP(${otpVersion})`);
+          core_1.debug(`Starting: installOTP(${otpVersion})`);
           await install_otp_1.installOTP(otpVersion);
         } catch (error) {
           core_1.setFailed(error.message);
@@ -1661,22 +1661,22 @@ module.exports = /******/ (function(modules, runtime) {
         return;
       }
       async function installOTP(spec) {
-        core_1.debug("starting: downloadVersionsText()");
+        core_1.debug("Starting: downloadVersionsText()");
         const versionsTextPath = await downloadVersionsText();
-        core_1.debug(`starting: readText(${versionsTextPath})`);
+        core_1.debug(`Starting: readText(${versionsTextPath})`);
         const versionsText = await readText(versionsTextPath);
-        core_1.debug(`starting: parseVersions(${versionsText})`);
+        core_1.debug(`Starting: parseVersions(${versionsText})`);
         const versions = parseVersions(versionsText);
-        core_1.debug(`starting: getReleasedVersion(${versions},${spec})`);
+        core_1.debug(`Starting: getReleasedVersion(${versions},${spec})`);
         const version = getReleasedVersion(versions, spec);
         if (!version) {
           throw new VersionDidNotMatch(versions, spec);
         }
-        core_1.debug(`starting: downloadTarGz(${version})`);
+        core_1.debug(`Starting: downloadTarGz(${version})`);
         const tarGzPath = await downloadTarGz(version);
-        core_1.debug(`starting: extractTar(${tarGzPath})`);
+        core_1.debug(`Starting: extractTar(${tarGzPath})`);
         const extractedDirectory = await tool_cache_1.extractTar(tarGzPath);
-        core_1.debug(`starting: compile(${extractedDirectory})`);
+        core_1.debug(`Starting: compile(${extractedDirectory})`);
         await compile(extractedDirectory);
         return;
       }
