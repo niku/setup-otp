@@ -1,3 +1,4 @@
+import { debug } from "@actions/core";
 import { downloadTool, extractTar } from "@actions/tool-cache";
 import * as fs from "fs";
 
@@ -45,15 +46,22 @@ async function compile(extractedDirectory: string): Promise<void> {
 }
 
 export async function installOTP(spec: string): Promise<void> {
+  debug("starting: downloadVersionsText()");
   const versionsTextPath = await downloadVersionsText();
+  debug(`starting: readText(${versionsTextPath})`);
   const versionsText = await readText(versionsTextPath);
+  debug(`starting: parseVersions(${versionsText})`);
   const versions = parseVersions(versionsText);
+  debug(`starting: getReleasedVersion(${versions},${spec})`);
   const version = getReleasedVersion(versions, spec);
   if (!version) {
     throw new VersionDidNotMatch(versions, spec);
   }
+  debug(`starting: downloadTarGz(${version})`);
   const tarGzPath = await downloadTarGz(version);
+  debug(`starting: extractTar(${tarGzPath})`);
   const extractedDirectory = await extractTar(tarGzPath);
+  debug(`starting: compile(${extractedDirectory})`);
   await compile(extractedDirectory);
   return;
 }

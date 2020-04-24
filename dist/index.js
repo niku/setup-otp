@@ -1255,15 +1255,13 @@ module.exports = /******/ (function(modules, runtime) {
       async function run() {
         try {
           const otpVersion = core_1.getInput("otp-version");
-          core_1.debug(`otp-version: ${otpVersion}`);
+          core_1.debug(`starting: installOTP(${otpVersion})`);
           await install_otp_1.installOTP(otpVersion);
         } catch (error) {
           core_1.setFailed(error.message);
         }
       }
-      core_1.debug("begin run()");
       run();
-      core_1.debug("end run()");
 
       /***/
     },
@@ -1622,6 +1620,7 @@ module.exports = /******/ (function(modules, runtime) {
           return result;
         };
       Object.defineProperty(exports, "__esModule", { value: true });
+      const core_1 = __webpack_require__(470);
       const tool_cache_1 = __webpack_require__(533);
       const fs = __importStar(__webpack_require__(747));
       class VersionDidNotMatch extends Error {
@@ -1662,15 +1661,22 @@ module.exports = /******/ (function(modules, runtime) {
         return;
       }
       async function installOTP(spec) {
+        core_1.debug("starting: downloadVersionsText()");
         const versionsTextPath = await downloadVersionsText();
+        core_1.debug(`starting: readText(${versionsTextPath})`);
         const versionsText = await readText(versionsTextPath);
+        core_1.debug(`starting: parseVersions(${versionsText})`);
         const versions = parseVersions(versionsText);
+        core_1.debug(`starting: getReleasedVersion(${versions},${spec})`);
         const version = getReleasedVersion(versions, spec);
         if (!version) {
           throw new VersionDidNotMatch(versions, spec);
         }
+        core_1.debug(`starting: downloadTarGz(${version})`);
         const tarGzPath = await downloadTarGz(version);
+        core_1.debug(`starting: extractTar(${tarGzPath})`);
         const extractedDirectory = await tool_cache_1.extractTar(tarGzPath);
+        core_1.debug(`starting: compile(${extractedDirectory})`);
         await compile(extractedDirectory);
         return;
       }

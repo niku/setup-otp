@@ -4,13 +4,11 @@ import { installOTP } from "./install-otp";
 async function run(): Promise<void> {
   try {
     const otpVersion = getInput("otp-version");
-    debug(`otp-version: ${otpVersion}`);
+    debug(`starting: installOTP(${otpVersion})`);
     await installOTP(otpVersion);
   } catch (error) {
     setFailed(error.message);
   }
 }
 
-debug("begin run()");
 run();
-debug("end run()");
