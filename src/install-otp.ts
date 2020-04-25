@@ -2,6 +2,7 @@ import { debug } from "@actions/core";
 import { exec } from "@actions/exec";
 import { downloadTool, extractTar } from "@actions/tool-cache";
 import * as fs from "fs";
+import { join } from "path";
 import { cwd, chdir } from "process";
 
 export class VersionDidNotMatch extends Error {
@@ -46,8 +47,12 @@ async function downloadTarGz(version: string): Promise<string> {
 async function compile(extractedDirectory: string): Promise<void> {
   const currentWorkingDiretcory = cwd();
   try {
-    chdir(extractedDirectory);
-    await exec("ls", ["-ltr"]);
+    const dirents = await fs.promises.readdir(extractedDirectory, { withFileTypes: true });
+    const dir = dirents.find(dirent => dirent.isDirectory);
+    if (!dir) {
+      throw new Error(`A directory is not found in ${currentWorkingDiretcory}`);
+    }
+    chdir(join(extractedDirectory, dir.name));
     await exec("./otp_build", ["autoconf"]);
     await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
     await exec("make", []);

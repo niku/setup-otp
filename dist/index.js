@@ -1624,6 +1624,7 @@ module.exports = /******/ (function(modules, runtime) {
       const exec_1 = __webpack_require__(986);
       const tool_cache_1 = __webpack_require__(533);
       const fs = __importStar(__webpack_require__(747));
+      const path_1 = __webpack_require__(622);
       const process_1 = __webpack_require__(765);
       class VersionDidNotMatch extends Error {
         constructor(candidateVersions, specifiedVersion) {
@@ -1662,8 +1663,12 @@ module.exports = /******/ (function(modules, runtime) {
       async function compile(extractedDirectory) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
-          process_1.chdir(extractedDirectory);
-          await exec_1.exec("ls", ["-ltr"]);
+          const dirents = await fs.promises.readdir(extractedDirectory, { withFileTypes: true });
+          const dir = dirents.find(dirent => dirent.isDirectory);
+          if (!dir) {
+            throw new Error(`A directory is not found in ${currentWorkingDiretcory}`);
+          }
+          process_1.chdir(path_1.join(extractedDirectory, dir.name));
           await exec_1.exec("./otp_build", ["autoconf"]);
           await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
           await exec_1.exec("make", []);
