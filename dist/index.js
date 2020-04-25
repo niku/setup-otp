@@ -1624,6 +1624,7 @@ module.exports = /******/ (function(modules, runtime) {
       const exec_1 = __webpack_require__(986);
       const tool_cache_1 = __webpack_require__(533);
       const fs = __importStar(__webpack_require__(747));
+      const process_1 = __webpack_require__(765);
       class VersionDidNotMatch extends Error {
         constructor(candidateVersions, specifiedVersion) {
           const candidates = candidateVersions.map(candidateVersion => `"${candidateVersion}"`).join(",");
@@ -1659,12 +1660,17 @@ module.exports = /******/ (function(modules, runtime) {
         return tool_cache_1.downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
       }
       async function compile(extractedDirectory) {
-        await exec_1.exec("./otp_build", ["autoconf"], { cwd: extractedDirectory });
-        await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"], { cwd: extractedDirectory });
-        await exec_1.exec("make", [], { cwd: extractedDirectory });
-        await exec_1.exec("make", ["release"], { cwd: extractedDirectory });
-        await exec_1.exec("ls", ["-l"], { cwd: extractedDirectory });
-        return;
+        const currentWorkingDiretcory = process_1.cwd();
+        try {
+          process_1.chdir(extractedDirectory);
+          await exec_1.exec("./otp_build", ["autoconf"]);
+          await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+          await exec_1.exec("make", []);
+          await exec_1.exec("make", ["release"]);
+          await exec_1.exec("ls", ["-l"]);
+        } finally {
+          process_1.chdir(currentWorkingDiretcory);
+        }
       }
       async function installOTP(spec) {
         core_1.debug("Starting: downloadVersionsText()");
@@ -4694,6 +4700,12 @@ module.exports = /******/ (function(modules, runtime) {
 
     /***/ 747: /***/ function(module) {
       module.exports = require("fs");
+
+      /***/
+    },
+
+    /***/ 765: /***/ function(module) {
+      module.exports = require("process");
 
       /***/
     },
