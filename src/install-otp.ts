@@ -2,6 +2,7 @@ import { debug } from "@actions/core";
 import { exec } from "@actions/exec";
 import { downloadTool, extractTar } from "@actions/tool-cache";
 import * as fs from "fs";
+import { cwd, chdir } from "process";
 
 export class VersionDidNotMatch extends Error {
   constructor(candidateVersions: string[], specifiedVersion: string) {
@@ -43,12 +44,17 @@ async function downloadTarGz(version: string): Promise<string> {
 }
 
 async function compile(extractedDirectory: string): Promise<void> {
-  await exec("./otp_build", ["autoconf"], { cwd: extractedDirectory });
-  await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"], { cwd: extractedDirectory });
-  await exec("make", [], { cwd: extractedDirectory });
-  await exec("make", ["release"], { cwd: extractedDirectory });
-  await exec("ls", ["-l"], { cwd: extractedDirectory });
-  return;
+  const currentWorkingDiretcory = cwd();
+  try {
+    chdir(extractedDirectory);
+    await exec("./otp_build", ["autoconf"]);
+    await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+    await exec("make", []);
+    await exec("make", ["release"]);
+    await exec("ls", ["-l"]);
+  } finally {
+    chdir(currentWorkingDiretcory);
+  }
 }
 
 export async function installOTP(spec: string): Promise<void> {
