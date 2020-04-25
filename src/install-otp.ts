@@ -47,6 +47,7 @@ async function compile(extractedDirectory: string): Promise<void> {
   const currentWorkingDiretcory = cwd();
   try {
     chdir(extractedDirectory);
+    await exec("ls", ["-ltr"]);
     await exec("./otp_build", ["autoconf"]);
     await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
     await exec("make", []);

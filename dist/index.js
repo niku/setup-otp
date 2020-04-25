@@ -1663,6 +1663,7 @@ module.exports = /******/ (function(modules, runtime) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(extractedDirectory);
+          await exec_1.exec("ls", ["-ltr"]);
           await exec_1.exec("./otp_build", ["autoconf"]);
           await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
           await exec_1.exec("make", []);
