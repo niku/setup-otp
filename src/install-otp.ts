@@ -58,14 +58,12 @@ async function compile(extractedDirectory: string, version: string): Promise<str
     await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
     await exec("make", []);
     await exec("make", ["release"]);
-    await exec("ls", ["release/x86_64-unknown-linux-gnu"]);
-    await exec("ls", ["release/x86_64-unknown-linux-gnu/releases"]);
-    await exec("ls", ["release/x86_64-unknown-linux-gnu/releases/*"]);
 
     const releaseArtifactFileName = `${version}.tar.gz`;
-    const releaseArtifactDirectory = (
-      await fs.promises.readdir(join(compileRootDirectory, "release"), { withFileTypes: true })
-    ).find(dirent => dirent.isDirectory);
+    // e.g. release/x86_64-unknown-linux-gnu
+    const releaseArtifactDirectory = (await fs.promises.readdir("release", { withFileTypes: true })).find(
+      dirent => dirent.isDirectory
+    );
     if (!releaseArtifactDirectory) {
       throw new Error(`A directory is not found in ${releaseArtifactDirectory}`);
     }
@@ -103,9 +101,12 @@ export async function installOTP(spec: string): Promise<void> {
     info(`Parameter: ${tarGzPath}`);
     return await extractTar(tarGzPath);
   });
-  await group("compile", async () => {
+  const compiledArtifactPath = await group("compile", async () => {
     info(`Parameter: ${extractedDirectory}`);
     return await compile(extractedDirectory, version);
+  });
+  await group("install", async () => {
+    info(`Parameter: ${compiledArtifactPath}`);
   });
   return;
 }

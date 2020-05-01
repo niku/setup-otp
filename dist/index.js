@@ -1674,13 +1674,11 @@ module.exports = /******/ (function(modules, runtime) {
           await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
           await exec_1.exec("make", []);
           await exec_1.exec("make", ["release"]);
-          await exec_1.exec("ls", ["release/x86_64-unknown-linux-gnu"]);
-          await exec_1.exec("ls", ["release/x86_64-unknown-linux-gnu/releases"]);
-          await exec_1.exec("ls", ["release/x86_64-unknown-linux-gnu/releases/*"]);
           const releaseArtifactFileName = `${version}.tar.gz`;
-          const releaseArtifactDirectory = (
-            await fs.promises.readdir(path_1.join(compileRootDirectory, "release"), { withFileTypes: true })
-          ).find(dirent => dirent.isDirectory);
+          // e.g. release/x86_64-unknown-linux-gnu
+          const releaseArtifactDirectory = (await fs.promises.readdir("release", { withFileTypes: true })).find(
+            dirent => dirent.isDirectory
+          );
           if (!releaseArtifactDirectory) {
             throw new Error(`A directory is not found in ${releaseArtifactDirectory}`);
           }
@@ -1717,9 +1715,12 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.info(`Parameter: ${tarGzPath}`);
           return await tool_cache_1.extractTar(tarGzPath);
         });
-        await core_1.group("compile", async () => {
+        const compiledArtifactPath = await core_1.group("compile", async () => {
           core_1.info(`Parameter: ${extractedDirectory}`);
           return await compile(extractedDirectory, version);
+        });
+        await core_1.group("install", async () => {
+          core_1.info(`Parameter: ${compiledArtifactPath}`);
         });
         return;
       }
