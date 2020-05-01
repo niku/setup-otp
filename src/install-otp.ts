@@ -1,4 +1,4 @@
-import { debug } from "@actions/core";
+import { info, group } from "@actions/core";
 import { exec } from "@actions/exec";
 import { downloadTool, extractTar } from "@actions/tool-cache";
 import * as fs from "fs";
@@ -44,7 +44,7 @@ async function downloadTarGz(version: string): Promise<string> {
   return downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
 }
 
-async function compile(extractedDirectory: string): Promise<void> {
+async function compile(extractedDirectory: string, version: string): Promise<void> {
   const currentWorkingDiretcory = cwd();
   try {
     const dirents = await fs.promises.readdir(extractedDirectory, { withFileTypes: true });
@@ -52,34 +52,50 @@ async function compile(extractedDirectory: string): Promise<void> {
     if (!dir) {
       throw new Error(`A directory is not found in ${currentWorkingDiretcory}`);
     }
-    chdir(join(extractedDirectory, dir.name));
+    const compileRootDirectory = join(extractedDirectory, dir.name);
+    chdir(compileRootDirectory);
     await exec("./otp_build", ["autoconf"]);
-    await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+    await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]); // TODO
     await exec("make", []);
     await exec("make", ["release"]);
-    await exec("ls", ["-l"]);
+    await exec("ls", ["-l", "release"]);
+    await exec("cd", [join("release", "*")]);
+    await exec("ls", ["-l", join("release", "*")]);
   } finally {
     chdir(currentWorkingDiretcory);
   }
 }
 
 export async function installOTP(spec: string): Promise<void> {
-  debug("Starting: downloadVersionsText()");
-  const versionsTextPath = await downloadVersionsText();
-  debug(`Starting: readText(${versionsTextPath})`);
-  const versionsText = await readText(versionsTextPath);
-  debug(`Starting: parseVersions(${versionsText})`);
-  const versions = parseVersions(versionsText);
-  debug(`Starting: getReleasedVersion(${versions},${spec})`);
-  const version = getReleasedVersion(versions, spec);
+  const versionsTextPath = await group("downloadVersionsText", async () => {
+    return await downloadVersionsText();
+  });
+  const versionsText = await group("readText", async () => {
+    info(`Parameter: ${versionsTextPath}`);
+    return await readText(versionsTextPath);
+  });
+  const versions = await group("parseVersions", async () => {
+    info(`Paramter: ${versionsText}`);
+    return parseVersions(versionsText);
+  });
+  const version = await group("getReleasedVersion", async () => {
+    info(`Parameter: ${versions},${spec}`);
+    return getReleasedVersion(versions, spec);
+  });
   if (!version) {
     throw new VersionDidNotMatch(versions, spec);
   }
-  debug(`Starting: downloadTarGz(${version})`);
-  const tarGzPath = await downloadTarGz(version);
-  debug(`Starting: extractTar(${tarGzPath})`);
-  const extractedDirectory = await extractTar(tarGzPath);
-  debug(`Starting: compile(${extractedDirectory})`);
-  await compile(extractedDirectory);
+  const tarGzPath = await group("downloadTarGz", async () => {
+    info(`Parameter: ${version}`);
+    return await downloadTarGz(version);
+  });
+  const extractedDirectory = await group("extractTar", async () => {
+    info(`Parameter: ${tarGzPath}`);
+    return await extractTar(tarGzPath);
+  });
+  await group("compile", async () => {
+    info(`Parameter: ${extractedDirectory}`);
+    return await compile(extractedDirectory, version);
+  });
   return;
 }
