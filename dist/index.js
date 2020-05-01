@@ -1671,12 +1671,21 @@ module.exports = /******/ (function(modules, runtime) {
           const compileRootDirectory = path_1.join(extractedDirectory, dir.name);
           process_1.chdir(compileRootDirectory);
           await exec_1.exec("./otp_build", ["autoconf"]);
-          await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]); // TODO
+          await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
           await exec_1.exec("make", []);
           await exec_1.exec("make", ["release"]);
-          await exec_1.exec("ls", ["-l", "release"]);
-          await exec_1.exec("cd", [path_1.join("release", "*")]);
-          await exec_1.exec("ls", ["-l", path_1.join("release", "*")]);
+          await exec_1.exec("ls", ["release/x86_64-unknown-linux-gnu"]);
+          await exec_1.exec("ls", ["release/x86_64-unknown-linux-gnu/releases"]);
+          await exec_1.exec("ls", ["release/x86_64-unknown-linux-gnu/releases/*"]);
+          const releaseArtifactFileName = `${version}.tar.gz`;
+          const releaseArtifactDirectory = (
+            await fs.promises.readdir(path_1.join(compileRootDirectory, "release"), { withFileTypes: true })
+          ).find(dirent => dirent.isDirectory);
+          if (!releaseArtifactDirectory) {
+            throw new Error(`A directory is not found in ${releaseArtifactDirectory}`);
+          }
+          await exec_1.exec("tar", ["-zcf", releaseArtifactFileName, "-C", releaseArtifactDirectory.name]);
+          return path_1.join(compileRootDirectory, releaseArtifactFileName);
         } finally {
           process_1.chdir(currentWorkingDiretcory);
         }

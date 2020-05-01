@@ -44,7 +44,7 @@ async function downloadTarGz(version: string): Promise<string> {
   return downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
 }
 
-async function compile(extractedDirectory: string, version: string): Promise<void> {
+async function compile(extractedDirectory: string, version: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
   try {
     const dirents = await fs.promises.readdir(extractedDirectory, { withFileTypes: true });
@@ -55,12 +55,22 @@ async function compile(extractedDirectory: string, version: string): Promise<voi
     const compileRootDirectory = join(extractedDirectory, dir.name);
     chdir(compileRootDirectory);
     await exec("./otp_build", ["autoconf"]);
-    await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]); // TODO
+    await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
     await exec("make", []);
     await exec("make", ["release"]);
-    await exec("ls", ["-l", "release"]);
-    await exec("cd", [join("release", "*")]);
-    await exec("ls", ["-l", join("release", "*")]);
+    await exec("ls", ["release/x86_64-unknown-linux-gnu"]);
+    await exec("ls", ["release/x86_64-unknown-linux-gnu/releases"]);
+    await exec("ls", ["release/x86_64-unknown-linux-gnu/releases/*"]);
+
+    const releaseArtifactFileName = `${version}.tar.gz`;
+    const releaseArtifactDirectory = (
+      await fs.promises.readdir(join(compileRootDirectory, "release"), { withFileTypes: true })
+    ).find(dirent => dirent.isDirectory);
+    if (!releaseArtifactDirectory) {
+      throw new Error(`A directory is not found in ${releaseArtifactDirectory}`);
+    }
+    await exec("tar", ["-zcf", releaseArtifactFileName, "-C", releaseArtifactDirectory.name]);
+    return join(compileRootDirectory, releaseArtifactFileName);
   } finally {
     chdir(currentWorkingDiretcory);
   }
