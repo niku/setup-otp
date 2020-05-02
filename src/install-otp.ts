@@ -49,7 +49,7 @@ async function ensureCompileRootDirectoryPath(extractedDirectoryPath: string): P
   // ensure having a child directory and return it
   const dirents = await fs.promises.readdir(extractedDirectoryPath, { withFileTypes: true });
   const dirPaths = dirents.filter(dirent => dirent.isDirectory).map(dirent => dirent.name);
-  if (dirPaths.length !== 0) {
+  if (dirPaths.length !== 1) {
     throw new Error(`Expect a child directory in ${extractedDirectoryPath}, But get ${dirPaths}`);
   }
   return dirPaths[0];
@@ -73,7 +73,7 @@ async function ensureInstallRootDirectoryPath(compiledArtifactPath: string): Pro
   // ensure having a child directory and return it
   const dirents = await fs.promises.readdir(compiledArtifactPath, { withFileTypes: true });
   const dirPaths = dirents.filter(dirent => dirent.isDirectory).map(dirent => dirent.name);
-  if (dirPaths.length !== 0) {
+  if (dirPaths.length !== 1) {
     throw new Error(`Expect a child directory in ${compiledArtifactPath}, But get ${dirPaths}`);
   }
   return dirPaths[0];
