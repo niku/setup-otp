@@ -3,7 +3,7 @@ import { exec } from "@actions/exec";
 import { downloadTool, extractTar, cacheDir } from "@actions/tool-cache";
 import * as fs from "fs";
 import { join } from "path";
-import { cwd, chdir } from "process";
+import { cwd, chdir, env } from "process";
 
 export class VersionDidNotMatch extends Error {
   constructor(candidateVersions: string[], specifiedVersion: string) {
@@ -83,15 +83,12 @@ async function ensureInstallRootDirectoryPath(compiledArtifactPath: string): Pro
 }
 
 async function install(installRootDirectoryPath: string): Promise<void> {
-  const currentWorkingDiretcory = cwd();
-  try {
-    chdir(installRootDirectoryPath);
-    // https://erlang.org/doc/installation_guide/INSTALL.html#installing
-    await exec("./Install", ["-minimal", installRootDirectoryPath]);
-    return;
-  } finally {
-    chdir(currentWorkingDiretcory);
-  }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const erlRoot = join(env.HOME!, ".local", "otp");
+  const installCommand = join(installRootDirectoryPath, "Install");
+  // https://erlang.org/doc/installation_guide/INSTALL.html#installing
+  await exec(installCommand, ["-minimal", erlRoot]);
+  return;
 }
 
 export async function installOTP(spec: string): Promise<void> {

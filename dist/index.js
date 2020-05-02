@@ -1737,15 +1737,12 @@ module.exports = /******/ (function(modules, runtime) {
         return path_1.join(compiledArtifactPath, dirPaths[0]);
       }
       async function install(installRootDirectoryPath) {
-        const currentWorkingDiretcory = process_1.cwd();
-        try {
-          process_1.chdir(installRootDirectoryPath);
-          // https://erlang.org/doc/installation_guide/INSTALL.html#installing
-          await exec_1.exec("./Install", ["-minimal", installRootDirectoryPath]);
-          return;
-        } finally {
-          process_1.chdir(currentWorkingDiretcory);
-        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const erlRoot = path_1.join(process_1.env.HOME, ".local", "otp");
+        const installCommand = path_1.join(installRootDirectoryPath, "Install");
+        // https://erlang.org/doc/installation_guide/INSTALL.html#installing
+        await exec_1.exec(installCommand, ["-minimal", erlRoot]);
+        return;
       }
       async function installOTP(spec) {
         const versionsTextPath = await core_1.group("downloadVersionsText", async () => {
