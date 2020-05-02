@@ -46,7 +46,7 @@ async function downloadTarGz(version: string): Promise<string> {
 }
 
 async function ensureCompileRootDirectoryPath(extractedDirectoryPath: string): Promise<string> {
-  const childrenOfExtractDirectoryPathPattern = join(extractedDirectoryPath, "otp-*");
+  const childrenOfExtractDirectoryPathPattern = join(extractedDirectoryPath, "otp-*/");
   debug(`childrenOfExtractDirectoryPathPattern: ${childrenOfExtractDirectoryPathPattern}`);
   const childrenOfExtractDirectoryPathGlobber = await create(childrenOfExtractDirectoryPathPattern);
   const childrenOfExtractDirectoryPath = await childrenOfExtractDirectoryPathGlobber.glob();
