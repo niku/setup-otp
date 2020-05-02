@@ -1,4 +1,4 @@
-import { info, group } from "@actions/core";
+import { info, group, debug } from "@actions/core";
 import { exec } from "@actions/exec";
 import { create } from "@actions/glob";
 import { downloadTool, extractTar, cacheDir } from "@actions/tool-cache";
@@ -46,7 +46,9 @@ async function downloadTarGz(version: string): Promise<string> {
 }
 
 async function ensureCompileRootDirectoryPath(extractedDirectoryPath: string): Promise<string> {
-  const childrenOfExtractDirectoryPathGlobber = await create(join(extractedDirectoryPath, "*"));
+  const childrenOfExtractDirectoryPathPattern = join(extractedDirectoryPath, "otp-*");
+  debug(`childrenOfExtractDirectoryPathPattern: ${childrenOfExtractDirectoryPathPattern}`);
+  const childrenOfExtractDirectoryPathGlobber = await create(childrenOfExtractDirectoryPathPattern);
   const childrenOfExtractDirectoryPath = await childrenOfExtractDirectoryPathGlobber.glob();
   if (childrenOfExtractDirectoryPath.length !== 1) {
     throw new Error(

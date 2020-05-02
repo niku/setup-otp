@@ -3304,7 +3304,9 @@ module.exports = /******/ (function(modules, runtime) {
         return tool_cache_1.downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
       }
       async function ensureCompileRootDirectoryPath(extractedDirectoryPath) {
-        const childrenOfExtractDirectoryPathGlobber = await glob_1.create(path_1.join(extractedDirectoryPath, "*"));
+        const childrenOfExtractDirectoryPathPattern = path_1.join(extractedDirectoryPath, "otp-*");
+        core_1.debug(`childrenOfExtractDirectoryPathPattern: ${childrenOfExtractDirectoryPathPattern}`);
+        const childrenOfExtractDirectoryPathGlobber = await glob_1.create(childrenOfExtractDirectoryPathPattern);
         const childrenOfExtractDirectoryPath = await childrenOfExtractDirectoryPathGlobber.glob();
         if (childrenOfExtractDirectoryPath.length !== 1) {
           throw new Error(
