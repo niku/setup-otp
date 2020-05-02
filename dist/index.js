@@ -1663,6 +1663,7 @@ module.exports = /******/ (function(modules, runtime) {
       Object.defineProperty(exports, "__esModule", { value: true });
       const core_1 = __webpack_require__(470);
       const exec_1 = __webpack_require__(986);
+      const io_1 = __webpack_require__(1);
       const tool_cache_1 = __webpack_require__(533);
       const fs = __importStar(__webpack_require__(747));
       const path_1 = __webpack_require__(622);
@@ -1739,6 +1740,7 @@ module.exports = /******/ (function(modules, runtime) {
       async function install(installRootDirectoryPath) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const erlRoot = path_1.join(process_1.env.HOME, ".local", "otp");
+        io_1.mkdirP(erlRoot);
         const installCommand = path_1.join(installRootDirectoryPath, "Install");
         // https://erlang.org/doc/installation_guide/INSTALL.html#installing
         await exec_1.exec(installCommand, ["-minimal", erlRoot]);

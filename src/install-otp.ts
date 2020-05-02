@@ -1,5 +1,6 @@
 import { info, group } from "@actions/core";
 import { exec } from "@actions/exec";
+import { mkdirP } from "@actions/io";
 import { downloadTool, extractTar, cacheDir } from "@actions/tool-cache";
 import * as fs from "fs";
 import { join } from "path";
@@ -85,6 +86,7 @@ async function ensureInstallRootDirectoryPath(compiledArtifactPath: string): Pro
 async function install(installRootDirectoryPath: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const erlRoot = join(env.HOME!, ".local", "otp");
+  mkdirP(erlRoot);
   const installCommand = join(installRootDirectoryPath, "Install");
   // https://erlang.org/doc/installation_guide/INSTALL.html#installing
   await exec(installCommand, ["-minimal", erlRoot]);
