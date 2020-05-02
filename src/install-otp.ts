@@ -1,6 +1,5 @@
-import { info, group, debug } from "@actions/core";
+import { info, group } from "@actions/core";
 import { exec } from "@actions/exec";
-import { create } from "@actions/glob";
 import { downloadTool, extractTar, cacheDir } from "@actions/tool-cache";
 import * as fs from "fs";
 import { join } from "path";
@@ -113,13 +112,13 @@ export async function installOTP(spec: string): Promise<void> {
     info(`Parameter: ${version}`);
     return await downloadTarGz(version);
   });
-  const extractedDirectory = await group("extractTar", async () => {
+  const extractedDirectoryPath = await group("extractTar", async () => {
     info(`Parameter: ${tarGzPath}`);
     return await extractTar(tarGzPath);
   });
   const compileRootDirectoryPath = await group("ensureCompileRootDirectoryPath", async () => {
-    info(`Parameter: ${extractedDirectory}`);
-    return await ensureCompileRootDirectoryPath(extractedDirectory);
+    info(`Parameter: ${extractedDirectoryPath}`);
+    return await ensureCompileRootDirectoryPath(extractedDirectoryPath);
   });
   const compiledArtifactPath = await group("compile", async () => {
     info(`Parameter: ${compileRootDirectoryPath}`);

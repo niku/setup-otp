@@ -1765,13 +1765,13 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.info(`Parameter: ${version}`);
           return await downloadTarGz(version);
         });
-        const extractedDirectory = await core_1.group("extractTar", async () => {
+        const extractedDirectoryPath = await core_1.group("extractTar", async () => {
           core_1.info(`Parameter: ${tarGzPath}`);
           return await tool_cache_1.extractTar(tarGzPath);
         });
         const compileRootDirectoryPath = await core_1.group("ensureCompileRootDirectoryPath", async () => {
-          core_1.info(`Parameter: ${extractedDirectory}`);
-          return await ensureCompileRootDirectoryPath(extractedDirectory);
+          core_1.info(`Parameter: ${extractedDirectoryPath}`);
+          return await ensureCompileRootDirectoryPath(extractedDirectoryPath);
         });
         const compiledArtifactPath = await core_1.group("compile", async () => {
           core_1.info(`Parameter: ${compileRootDirectoryPath}`);
