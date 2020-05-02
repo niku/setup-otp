@@ -46,18 +46,13 @@ async function downloadTarGz(version: string): Promise<string> {
 }
 
 async function ensureCompileRootDirectoryPath(extractedDirectoryPath: string): Promise<string> {
-  const childrenOfExtractDirectoryPathPattern = join(extractedDirectoryPath, "otp-*/");
-  debug(`childrenOfExtractDirectoryPathPattern: ${childrenOfExtractDirectoryPathPattern}`);
-  const childrenOfExtractDirectoryPathGlobber = await create(childrenOfExtractDirectoryPathPattern);
-  const childrenOfExtractDirectoryPath = await childrenOfExtractDirectoryPathGlobber.glob();
-  if (childrenOfExtractDirectoryPath.length !== 1) {
-    throw new Error(
-      `Expect a child directory in ${
-        childrenOfExtractDirectoryPathGlobber.getSearchPaths()[0]
-      }, But gets ${childrenOfExtractDirectoryPath}`
-    );
+  // ensure having a child directory and return it
+  const dirents = await fs.promises.readdir(extractedDirectoryPath, { withFileTypes: true });
+  const dirPaths = dirents.filter(dirent => dirent.isDirectory).map(dirent => dirent.name);
+  if (dirPaths.length !== 0) {
+    throw new Error(`Expect a child directory in ${extractedDirectoryPath}, But get ${dirPaths}`);
   }
-  return childrenOfExtractDirectoryPath[0];
+  return dirPaths[0];
 }
 
 async function compile(compileRootDirectoryPath: string): Promise<string> {
@@ -75,16 +70,13 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
 }
 
 async function ensureInstallRootDirectoryPath(compiledArtifactPath: string): Promise<string> {
-  const childrenOfCompiledArtifactPathGlobber = await create(join(compiledArtifactPath, "*"));
-  const childrenOfCompiledArtifactPath = await childrenOfCompiledArtifactPathGlobber.glob();
-  if (childrenOfCompiledArtifactPath.length !== 1) {
-    throw new Error(
-      `Expect a child directory in ${
-        childrenOfCompiledArtifactPathGlobber.getSearchPaths()[0]
-      }, But gets ${childrenOfCompiledArtifactPath}`
-    );
+  // ensure having a child directory and return it
+  const dirents = await fs.promises.readdir(compiledArtifactPath, { withFileTypes: true });
+  const dirPaths = dirents.filter(dirent => dirent.isDirectory).map(dirent => dirent.name);
+  if (dirPaths.length !== 0) {
+    throw new Error(`Expect a child directory in ${compiledArtifactPath}, But get ${dirPaths}`);
   }
-  return childrenOfCompiledArtifactPath[0];
+  return dirPaths[0];
 }
 
 async function install(installRootDirectoryPath: string): Promise<void> {
