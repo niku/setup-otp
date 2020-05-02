@@ -1,6 +1,7 @@
 import { info, group } from "@actions/core";
 import { exec } from "@actions/exec";
-import { downloadTool, extractTar } from "@actions/tool-cache";
+import { create } from "@actions/glob";
+import { downloadTool, extractTar, cacheDir } from "@actions/tool-cache";
 import * as fs from "fs";
 import { join } from "path";
 import { cwd, chdir } from "process";
@@ -44,31 +45,52 @@ async function downloadTarGz(version: string): Promise<string> {
   return downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
 }
 
-async function compile(extractedDirectory: string, version: string): Promise<string> {
+async function ensureCompileRootDirectoryPath(extractedDirectoryPath: string): Promise<string> {
+  const childrenOfExtractDirectoryPathGlobber = await create(join(extractedDirectoryPath, "*"));
+  const childrenOfExtractDirectoryPath = await childrenOfExtractDirectoryPathGlobber.glob();
+  if (childrenOfExtractDirectoryPath.length !== 1) {
+    throw new Error(
+      `Expect a child directory in ${
+        childrenOfExtractDirectoryPathGlobber.getSearchPaths()[0]
+      }, But gets ${childrenOfExtractDirectoryPath}`
+    );
+  }
+  return childrenOfExtractDirectoryPath[0];
+}
+
+async function compile(compileRootDirectoryPath: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
   try {
-    const dirents = await fs.promises.readdir(extractedDirectory, { withFileTypes: true });
-    const dir = dirents.find(dirent => dirent.isDirectory);
-    if (!dir) {
-      throw new Error(`A directory is not found in ${currentWorkingDiretcory}`);
-    }
-    const compileRootDirectory = join(extractedDirectory, dir.name);
-    chdir(compileRootDirectory);
+    chdir(compileRootDirectoryPath);
     await exec("./otp_build", ["autoconf"]);
     await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
     await exec("make", []);
     await exec("make", ["release"]);
+    return join(compileRootDirectoryPath, "release");
+  } finally {
+    chdir(currentWorkingDiretcory);
+  }
+}
 
-    const releaseArtifactFileName = `${version}.tar.gz`;
-    // e.g. release/x86_64-unknown-linux-gnu
-    const releaseArtifactDirectory = (await fs.promises.readdir("release", { withFileTypes: true })).find(
-      dirent => dirent.isDirectory
+async function ensureInstallRootDirectoryPath(compiledArtifactPath: string): Promise<string> {
+  const childrenOfCompiledArtifactPathGlobber = await create(join(compiledArtifactPath, "*"));
+  const childrenOfCompiledArtifactPath = await childrenOfCompiledArtifactPathGlobber.glob();
+  if (childrenOfCompiledArtifactPath.length !== 1) {
+    throw new Error(
+      `Expect a child directory in ${
+        childrenOfCompiledArtifactPathGlobber.getSearchPaths()[0]
+      }, But gets ${childrenOfCompiledArtifactPath}`
     );
-    if (!releaseArtifactDirectory) {
-      throw new Error(`A directory is not found in ${releaseArtifactDirectory}`);
-    }
-    await exec("tar", ["-zcf", releaseArtifactFileName, "-C", releaseArtifactDirectory.name]);
-    return join(compileRootDirectory, releaseArtifactFileName);
+  }
+  return childrenOfCompiledArtifactPath[0];
+}
+
+async function install(installRootDirectoryPath: string): Promise<void> {
+  const currentWorkingDiretcory = cwd();
+  try {
+    chdir(installRootDirectoryPath);
+    await exec("./Install", []);
+    return;
   } finally {
     chdir(currentWorkingDiretcory);
   }
@@ -101,12 +123,25 @@ export async function installOTP(spec: string): Promise<void> {
     info(`Parameter: ${tarGzPath}`);
     return await extractTar(tarGzPath);
   });
-  const compiledArtifactPath = await group("compile", async () => {
+  const compileRootDirectoryPath = await group("ensureCompileRootDirectoryPath", async () => {
     info(`Parameter: ${extractedDirectory}`);
-    return await compile(extractedDirectory, version);
+    return await ensureCompileRootDirectoryPath(extractedDirectory);
+  });
+  const compiledArtifactPath = await group("compile", async () => {
+    info(`Parameter: ${compileRootDirectoryPath}`);
+    return await compile(compileRootDirectoryPath);
+  });
+  const installRootDirectoryPath = await group("ensureInstallRootDirectoryPath", async () => {
+    info(`Parameter: ${compiledArtifactPath}`);
+    return await ensureInstallRootDirectoryPath(compiledArtifactPath);
+  });
+  await group("cacheDir", async () => {
+    info(`Parameter: ${installRootDirectoryPath}, "otp", ${version}`);
+    cacheDir(installRootDirectoryPath, "otp", version);
   });
   await group("install", async () => {
-    info(`Parameter: ${compiledArtifactPath}`);
+    info(`Parameter: ${installRootDirectoryPath}`);
+    install(installRootDirectoryPath);
   });
   return;
 }
