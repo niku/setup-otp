@@ -62,8 +62,10 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     await exec("./otp_build", ["autoconf"]);
     await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
     // https://erlang.org/doc/installation_guide/INSTALL.html#building
-    await exec("make", []);
-    await exec("make", ["release"]);
+    // A hardware which is GitHub Actions supported has 2-core CPU
+    // https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
+    await exec("make", ["-j2"]);
+    await exec("make", ["-j2", "release"]);
     return join(compileRootDirectoryPath, "release");
   } finally {
     chdir(currentWorkingDiretcory);

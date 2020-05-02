@@ -1718,8 +1718,10 @@ module.exports = /******/ (function(modules, runtime) {
           await exec_1.exec("./otp_build", ["autoconf"]);
           await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
           // https://erlang.org/doc/installation_guide/INSTALL.html#building
-          await exec_1.exec("make", []);
-          await exec_1.exec("make", ["release"]);
+          // A hardware which is GitHub Actions supported has 2-core CPU
+          // https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
+          await exec_1.exec("make", ["-j2"]);
+          await exec_1.exec("make", ["-j2", "release"]);
           return path_1.join(compileRootDirectoryPath, "release");
         } finally {
           process_1.chdir(currentWorkingDiretcory);
