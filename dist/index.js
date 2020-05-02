@@ -1708,7 +1708,7 @@ module.exports = /******/ (function(modules, runtime) {
         if (dirPaths.length !== 1) {
           throw new Error(`Expect a child directory in ${extractedDirectoryPath}, But get ${dirPaths}`);
         }
-        return dirPaths[0];
+        return path_1.join(extractedDirectoryPath, dirPaths[0]);
       }
       async function compile(compileRootDirectoryPath) {
         const currentWorkingDiretcory = process_1.cwd();
@@ -1730,7 +1730,7 @@ module.exports = /******/ (function(modules, runtime) {
         if (dirPaths.length !== 1) {
           throw new Error(`Expect a child directory in ${compiledArtifactPath}, But get ${dirPaths}`);
         }
-        return dirPaths[0];
+        return path_1.join(compiledArtifactPath, dirPaths[0]);
       }
       async function install(installRootDirectoryPath) {
         const currentWorkingDiretcory = process_1.cwd();

@@ -52,7 +52,7 @@ async function ensureCompileRootDirectoryPath(extractedDirectoryPath: string): P
   if (dirPaths.length !== 1) {
     throw new Error(`Expect a child directory in ${extractedDirectoryPath}, But get ${dirPaths}`);
   }
-  return dirPaths[0];
+  return join(extractedDirectoryPath, dirPaths[0]);
 }
 
 async function compile(compileRootDirectoryPath: string): Promise<string> {
@@ -76,7 +76,7 @@ async function ensureInstallRootDirectoryPath(compiledArtifactPath: string): Pro
   if (dirPaths.length !== 1) {
     throw new Error(`Expect a child directory in ${compiledArtifactPath}, But get ${dirPaths}`);
   }
-  return dirPaths[0];
+  return join(compiledArtifactPath, dirPaths[0]);
 }
 
 async function install(installRootDirectoryPath: string): Promise<void> {
