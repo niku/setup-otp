@@ -1736,7 +1736,7 @@ module.exports = /******/ (function(modules, runtime) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(installRootDirectoryPath);
-          await exec_1.exec("./Install", []);
+          await exec_1.exec("./Install", ["-minimal", "."]);
           return;
         } finally {
           process_1.chdir(currentWorkingDiretcory);

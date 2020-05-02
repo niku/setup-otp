@@ -82,7 +82,7 @@ async function install(installRootDirectoryPath: string): Promise<void> {
   const currentWorkingDiretcory = cwd();
   try {
     chdir(installRootDirectoryPath);
-    await exec("./Install", []);
+    await exec("./Install", ["-minimal", "."]);
     return;
   } finally {
     chdir(currentWorkingDiretcory);
