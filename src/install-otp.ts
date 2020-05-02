@@ -58,8 +58,10 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
   try {
     chdir(compileRootDirectoryPath);
+    // https://erlang.org/doc/installation_guide/INSTALL.html#configuring
     await exec("./otp_build", ["autoconf"]);
     await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+    // https://erlang.org/doc/installation_guide/INSTALL.html#building
     await exec("make", []);
     await exec("make", ["release"]);
     return join(compileRootDirectoryPath, "release");
@@ -82,7 +84,8 @@ async function install(installRootDirectoryPath: string): Promise<void> {
   const currentWorkingDiretcory = cwd();
   try {
     chdir(installRootDirectoryPath);
-    await exec("./Install", ["-minimal", "."]);
+    // https://erlang.org/doc/installation_guide/INSTALL.html#installing
+    await exec("./Install", ["-minimal", installRootDirectoryPath]);
     return;
   } finally {
     chdir(currentWorkingDiretcory);

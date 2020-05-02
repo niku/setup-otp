@@ -1714,8 +1714,10 @@ module.exports = /******/ (function(modules, runtime) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(compileRootDirectoryPath);
+          // https://erlang.org/doc/installation_guide/INSTALL.html#configuring
           await exec_1.exec("./otp_build", ["autoconf"]);
           await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+          // https://erlang.org/doc/installation_guide/INSTALL.html#building
           await exec_1.exec("make", []);
           await exec_1.exec("make", ["release"]);
           return path_1.join(compileRootDirectoryPath, "release");
@@ -1736,7 +1738,8 @@ module.exports = /******/ (function(modules, runtime) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(installRootDirectoryPath);
-          await exec_1.exec("./Install", ["-minimal", "."]);
+          // https://erlang.org/doc/installation_guide/INSTALL.html#installing
+          await exec_1.exec("./Install", ["-minimal", installRootDirectoryPath]);
           return;
         } finally {
           process_1.chdir(currentWorkingDiretcory);
