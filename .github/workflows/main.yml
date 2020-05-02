@@ -15,3 +15,6 @@ jobs:
         id: setup-otp
         with:
           otp-version: "22.3"
+      - name: Show self otp version to check the otp setuped correctly
+        # Show otp major version. If the setup failed following command will also fail.
+        run: erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().' -noshell
