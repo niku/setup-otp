@@ -1744,6 +1744,7 @@ module.exports = /******/ (function(modules, runtime) {
           const targetPath = path.join(".local", "otp");
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const erlRoot = path.join(process_1.env.HOME, targetPath);
+          io_1.mkdirP(targetPath);
           io_1.mkdirP(erlRoot);
           await exec_1.exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
           await exec_1.exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);

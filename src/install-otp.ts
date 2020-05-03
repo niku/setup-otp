@@ -92,6 +92,7 @@ async function install(artifactPath: string): Promise<string> {
     const targetPath = path.join(".local", "otp");
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const erlRoot = path.join(env.HOME!, targetPath);
+    mkdirP(targetPath);
     mkdirP(erlRoot);
     await exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
     await exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);
