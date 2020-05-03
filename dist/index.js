@@ -1276,7 +1276,7 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.setFailed(error.message);
         }
       }
-      run();
+      run().catch(error => core_1.setFailed(error.message));
 
       /***/
     },
@@ -1747,6 +1747,7 @@ module.exports = /******/ (function(modules, runtime) {
           io_1.mkdirP(targetPath);
           io_1.mkdirP(erlRoot);
           await exec_1.exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
+          await exec_1.exec("ls", ["-l", targetPath]);
           await exec_1.exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);
           return erlRoot;
         } finally {

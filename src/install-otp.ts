@@ -95,6 +95,7 @@ async function install(artifactPath: string): Promise<string> {
     mkdirP(targetPath);
     mkdirP(erlRoot);
     await exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
+    await exec("ls", ["-l", targetPath]);
     await exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);
     return erlRoot;
   } finally {
