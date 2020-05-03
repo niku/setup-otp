@@ -1276,7 +1276,7 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.setFailed(error.message);
         }
       }
-      run().catch(error => core_1.setFailed(error.message));
+      run();
 
       /***/
     },
@@ -1731,7 +1731,7 @@ module.exports = /******/ (function(modules, runtime) {
           // Make tar
           //
           const target = "x86_64-unknown-linux-gnu";
-          await exec_1.exec("tar", ["-zcf", "release.tar.gz", path.join("release", target)]);
+          await exec_1.exec("tar", ["-zcf", "release.tar.gz", `release/${target}/`]);
           return path.join(compileRootDirectoryPath, "release.tar.gz");
         } finally {
           process_1.chdir(currentWorkingDiretcory);

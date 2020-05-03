@@ -77,7 +77,7 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     // Make tar
     //
     const target = "x86_64-unknown-linux-gnu";
-    await exec("tar", ["-zcf", "release.tar.gz", path.join("release", target)]);
+    await exec("tar", ["-zcf", "release.tar.gz", `release/${target}/`]);
 
     return path.join(compileRootDirectoryPath, "release.tar.gz");
   } finally {

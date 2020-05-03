@@ -11,4 +11,4 @@ async function run(): Promise<void> {
   }
 }
 
-run().catch(error => setFailed(error.message));
+run();
