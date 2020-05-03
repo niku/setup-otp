@@ -56,7 +56,7 @@ function ensureCompileRootDirectoryPath(extractedDirectoryPath: string, version:
   }
 }
 
-async function compile(compileRootDirectoryPath: string, version: string): Promise<string> {
+async function compile(compileRootDirectoryPath: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
   try {
     chdir(compileRootDirectoryPath);
@@ -77,9 +77,9 @@ async function compile(compileRootDirectoryPath: string, version: string): Promi
     // Make tar
     //
     const target = "x86_64-unknown-linux-gnu";
-    await exec("tar", ["-zcf", `${version}.tar.gz`, path.join("release", target)]);
+    await exec("tar", ["-zcf", "release.tar.gz", path.join("release", target)]);
 
-    return path.join(compileRootDirectoryPath, `${version}.tar.gz`);
+    return path.join(compileRootDirectoryPath, "release.tar.gz");
   } finally {
     chdir(currentWorkingDiretcory);
   }
@@ -133,17 +133,17 @@ export async function installOTP(spec: string): Promise<void> {
     return ensureCompileRootDirectoryPath(extractedDirectoryPath, version);
   });
   const compiledArtifactPath = await group("compile", async () => {
-    info(`Parameter: ${compileRootDirectoryPath}, version`);
-    return await compile(compileRootDirectoryPath, version);
+    info(`Parameter: ${compileRootDirectoryPath}`);
+    return await compile(compileRootDirectoryPath);
   });
-  const cachedArtifactPath = await group("cacheFile", async () => {
-    const name = path.basename(compiledArtifactPath);
-    info(`Parameter: ${compiledArtifactPath}, ${name}, "otp", ${version}`);
-    return await cacheFile(compiledArtifactPath, name, "otp", version);
+  const cachedArtifactDirectoryPath = await group("cacheFile", async () => {
+    info(`Parameter: ${compiledArtifactPath}, "release.tar.gz", "otp", ${version}`);
+    return await cacheFile(compiledArtifactPath, "release.tar.gz", "otp", version);
   });
   await group("install", async () => {
-    info(`Parameter: ${cachedArtifactPath}`);
-    install(cachedArtifactPath);
+    const artifactPath = path.join(cachedArtifactDirectoryPath, "release.tar.gz");
+    info(`Parameter: ${artifactPath}`);
+    install(artifactPath);
   });
   return;
 }

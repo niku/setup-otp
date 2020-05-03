@@ -1712,7 +1712,7 @@ module.exports = /******/ (function(modules, runtime) {
           throw new Error(`Expect a directory ${compileRootDirectoryPath} exists, but it doesn't.`);
         }
       }
-      async function compile(compileRootDirectoryPath, version) {
+      async function compile(compileRootDirectoryPath) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(compileRootDirectoryPath);
@@ -1731,8 +1731,8 @@ module.exports = /******/ (function(modules, runtime) {
           // Make tar
           //
           const target = "x86_64-unknown-linux-gnu";
-          await exec_1.exec("tar", ["-zcf", `${version}.tar.gz`, path.join("release", target)]);
-          return path.join(compileRootDirectoryPath, `${version}.tar.gz`);
+          await exec_1.exec("tar", ["-zcf", "release.tar.gz", path.join("release", target)]);
+          return path.join(compileRootDirectoryPath, "release.tar.gz");
         } finally {
           process_1.chdir(currentWorkingDiretcory);
         }
@@ -1784,17 +1784,17 @@ module.exports = /******/ (function(modules, runtime) {
           return ensureCompileRootDirectoryPath(extractedDirectoryPath, version);
         });
         const compiledArtifactPath = await core_1.group("compile", async () => {
-          core_1.info(`Parameter: ${compileRootDirectoryPath}, version`);
-          return await compile(compileRootDirectoryPath, version);
+          core_1.info(`Parameter: ${compileRootDirectoryPath}`);
+          return await compile(compileRootDirectoryPath);
         });
-        const cachedArtifactPath = await core_1.group("cacheFile", async () => {
-          const name = path.basename(compiledArtifactPath);
-          core_1.info(`Parameter: ${compiledArtifactPath}, ${name}, "otp", ${version}`);
-          return await tool_cache_1.cacheFile(compiledArtifactPath, name, "otp", version);
+        const cachedArtifactDirectoryPath = await core_1.group("cacheFile", async () => {
+          core_1.info(`Parameter: ${compiledArtifactPath}, "release.tar.gz", "otp", ${version}`);
+          return await tool_cache_1.cacheFile(compiledArtifactPath, "release.tar.gz", "otp", version);
         });
         await core_1.group("install", async () => {
-          core_1.info(`Parameter: ${cachedArtifactPath}`);
-          install(cachedArtifactPath);
+          const artifactPath = path.join(cachedArtifactDirectoryPath, "release.tar.gz");
+          core_1.info(`Parameter: ${artifactPath}`);
+          install(artifactPath);
         });
         return;
       }
