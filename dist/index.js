@@ -1666,8 +1666,9 @@ module.exports = /******/ (function(modules, runtime) {
       const io_1 = __webpack_require__(1);
       const tool_cache_1 = __webpack_require__(533);
       const fs = __importStar(__webpack_require__(747));
-      const path_1 = __webpack_require__(622);
+      const path = __importStar(__webpack_require__(622));
       const process_1 = __webpack_require__(765);
+      const os_1 = __webpack_require__(87);
       class VersionDidNotMatch extends Error {
         constructor(candidateVersions, specifiedVersion) {
           const candidates = candidateVersions.map(candidateVersion => `"${candidateVersion}"`).join(",");
@@ -1702,49 +1703,54 @@ module.exports = /******/ (function(modules, runtime) {
       async function downloadTarGz(version) {
         return tool_cache_1.downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
       }
-      async function ensureCompileRootDirectoryPath(extractedDirectoryPath) {
-        // ensure having a child directory and return it
-        const dirents = await fs.promises.readdir(extractedDirectoryPath, { withFileTypes: true });
-        const dirPaths = dirents.filter(dirent => dirent.isDirectory).map(dirent => dirent.name);
-        if (dirPaths.length !== 1) {
-          throw new Error(`Expect a child directory in ${extractedDirectoryPath}, But get ${dirPaths}`);
+      function ensureCompileRootDirectoryPath(extractedDirectoryPath, version) {
+        const compileRootDirectoryName = `otp-OTP-${version}`;
+        const compileRootDirectoryPath = path.join(extractedDirectoryPath, compileRootDirectoryName);
+        if (fs.existsSync(compileRootDirectoryPath)) {
+          return compileRootDirectoryPath;
+        } else {
+          throw new Error(`Expect a directory ${compileRootDirectoryPath} exists, but it doesn't.`);
         }
-        return path_1.join(extractedDirectoryPath, dirPaths[0]);
       }
-      async function compile(compileRootDirectoryPath) {
+      async function compile(compileRootDirectoryPath, version) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(compileRootDirectoryPath);
-          // https://erlang.org/doc/installation_guide/INSTALL.html#configuring
+          //
+          // Configure
+          //
           await exec_1.exec("./otp_build", ["autoconf"]);
           await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
-          // https://erlang.org/doc/installation_guide/INSTALL.html#building
-          // A hardware which is GitHub Actions supported has 2-core CPU
-          // https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
-          await exec_1.exec("make", ["-j2"]);
-          await exec_1.exec("make", ["-j2", "release"]);
-          return path_1.join(compileRootDirectoryPath, "release");
+          //
+          // Make release
+          //
+          const cpuCount = os_1.cpus().length;
+          await exec_1.exec("make", [`-j${cpuCount}`]);
+          await exec_1.exec("make", ["release"]);
+          //
+          // Make tar
+          //
+          const target = "x86_64-unknown-linux-gnu";
+          await exec_1.exec("tar", ["-zcf", `${version}.tar.gz`, path.join("release", target)]);
+          return path.join(compileRootDirectoryPath, `${version}.tar.gz`);
         } finally {
           process_1.chdir(currentWorkingDiretcory);
         }
       }
-      async function ensureInstallRootDirectoryPath(compiledArtifactPath) {
-        // ensure having a child directory and return it
-        const dirents = await fs.promises.readdir(compiledArtifactPath, { withFileTypes: true });
-        const dirPaths = dirents.filter(dirent => dirent.isDirectory).map(dirent => dirent.name);
-        if (dirPaths.length !== 1) {
-          throw new Error(`Expect a child directory in ${compiledArtifactPath}, But get ${dirPaths}`);
+      async function install(artifactPath) {
+        const currentWorkingDiretcory = process_1.cwd();
+        try {
+          process_1.chdir(os_1.tmpdir());
+          const targetPath = path.join(".local", "otp");
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const erlRoot = path.join(process_1.env.HOME, targetPath);
+          io_1.mkdirP(erlRoot);
+          await exec_1.exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
+          await exec_1.exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);
+          return erlRoot;
+        } finally {
+          process_1.chdir(currentWorkingDiretcory);
         }
-        return path_1.join(compiledArtifactPath, dirPaths[0]);
-      }
-      async function install(installRootDirectoryPath) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const erlRoot = path_1.join(process_1.env.HOME, ".local", "otp");
-        io_1.mkdirP(erlRoot);
-        const installCommand = path_1.join(installRootDirectoryPath, "Install");
-        // https://erlang.org/doc/installation_guide/INSTALL.html#installing
-        await exec_1.exec(installCommand, ["-minimal", erlRoot]);
-        return;
       }
       async function installOTP(spec) {
         const versionsTextPath = await core_1.group("downloadVersionsText", async () => {
@@ -1774,24 +1780,21 @@ module.exports = /******/ (function(modules, runtime) {
           return await tool_cache_1.extractTar(tarGzPath);
         });
         const compileRootDirectoryPath = await core_1.group("ensureCompileRootDirectoryPath", async () => {
-          core_1.info(`Parameter: ${extractedDirectoryPath}`);
-          return await ensureCompileRootDirectoryPath(extractedDirectoryPath);
+          core_1.info(`Parameter: ${extractedDirectoryPath}, version`);
+          return ensureCompileRootDirectoryPath(extractedDirectoryPath, version);
         });
         const compiledArtifactPath = await core_1.group("compile", async () => {
-          core_1.info(`Parameter: ${compileRootDirectoryPath}`);
-          return await compile(compileRootDirectoryPath);
+          core_1.info(`Parameter: ${compileRootDirectoryPath}, version`);
+          return await compile(compileRootDirectoryPath, version);
         });
-        const installRootDirectoryPath = await core_1.group("ensureInstallRootDirectoryPath", async () => {
-          core_1.info(`Parameter: ${compiledArtifactPath}`);
-          return await ensureInstallRootDirectoryPath(compiledArtifactPath);
-        });
-        await core_1.group("cacheDir", async () => {
-          core_1.info(`Parameter: ${installRootDirectoryPath}, "otp", ${version}`);
-          tool_cache_1.cacheDir(installRootDirectoryPath, "otp", version);
+        const cachedArtifactPath = await core_1.group("cacheFile", async () => {
+          const name = path.basename(compiledArtifactPath);
+          core_1.info(`Parameter: ${compiledArtifactPath}, ${name}, "otp", ${version}`);
+          return await tool_cache_1.cacheFile(compiledArtifactPath, name, "otp", version);
         });
         await core_1.group("install", async () => {
-          core_1.info(`Parameter: ${installRootDirectoryPath}`);
-          install(installRootDirectoryPath);
+          core_1.info(`Parameter: ${cachedArtifactPath}`);
+          install(cachedArtifactPath);
         });
         return;
       }
