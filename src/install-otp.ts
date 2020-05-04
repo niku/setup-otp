@@ -149,6 +149,6 @@ export async function installOTP(spec: string): Promise<string> {
     info(`Parameter: ${artifactPath}`);
     return install(artifactPath);
   });
-  addPath(installedPath);
+  addPath(path.join(installedPath, "bin"));
   return installedPath;
 }

@@ -1800,7 +1800,7 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.info(`Parameter: ${artifactPath}`);
           return install(artifactPath);
         });
-        core_1.addPath(installedPath);
+        core_1.addPath(path.join(installedPath, "bin"));
         return installedPath;
       }
       exports.installOTP = installOTP;
