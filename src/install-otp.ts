@@ -1,11 +1,11 @@
-import { info, group } from "@actions/core";
+import { info, group, addPath } from "@actions/core";
 import { exec } from "@actions/exec";
 import { mkdirP } from "@actions/io";
 import { downloadTool, extractTar, cacheFile } from "@actions/tool-cache";
 import * as fs from "fs";
 import * as path from "path";
 import { cwd, chdir, env } from "process";
-import { cpus, tmpdir } from "os";
+import { cpus } from "os";
 
 export class VersionDidNotMatch extends Error {
   constructor(candidateVersions: string[], specifiedVersion: string) {
@@ -98,7 +98,6 @@ async function install(artifactPath: string): Promise<string> {
     chdir(homePath);
     mkdirP(erlRootPath);
     await exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
-    await exec("ls", ["-l", targetPath]);
     await exec(path.join(targetPath, "Install"), ["-minimal", erlRootPath]);
     return erlRootPath;
   } finally {
@@ -106,7 +105,7 @@ async function install(artifactPath: string): Promise<string> {
   }
 }
 
-export async function installOTP(spec: string): Promise<void> {
+export async function installOTP(spec: string): Promise<string> {
   const versionsTextPath = await group("downloadVersionsText", async () => {
     return await downloadVersionsText();
   });
@@ -145,10 +144,11 @@ export async function installOTP(spec: string): Promise<void> {
     info(`Parameter: ${compiledArtifactPath}, "release.tar.gz", "otp", ${version}`);
     return await cacheFile(compiledArtifactPath, "release.tar.gz", "otp", version);
   });
-  await group("install", async () => {
+  const installedPath = await group("install", async () => {
     const artifactPath = path.join(cachedArtifactDirectoryPath, "release.tar.gz");
     info(`Parameter: ${artifactPath}`);
-    install(artifactPath);
+    return install(artifactPath);
   });
-  return;
+  addPath(installedPath);
+  return installedPath;
 }

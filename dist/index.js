@@ -1750,7 +1750,6 @@ module.exports = /******/ (function(modules, runtime) {
           process_1.chdir(homePath);
           io_1.mkdirP(erlRootPath);
           await exec_1.exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
-          await exec_1.exec("ls", ["-l", targetPath]);
           await exec_1.exec(path.join(targetPath, "Install"), ["-minimal", erlRootPath]);
           return erlRootPath;
         } finally {
@@ -1796,12 +1795,13 @@ module.exports = /******/ (function(modules, runtime) {
           core_1.info(`Parameter: ${compiledArtifactPath}, "release.tar.gz", "otp", ${version}`);
           return await tool_cache_1.cacheFile(compiledArtifactPath, "release.tar.gz", "otp", version);
         });
-        await core_1.group("install", async () => {
+        const installedPath = await core_1.group("install", async () => {
           const artifactPath = path.join(cachedArtifactDirectoryPath, "release.tar.gz");
           core_1.info(`Parameter: ${artifactPath}`);
-          install(artifactPath);
+          return install(artifactPath);
         });
-        return;
+        core_1.addPath(installedPath);
+        return installedPath;
       }
       exports.installOTP = installOTP;
 
