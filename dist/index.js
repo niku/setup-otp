@@ -1743,16 +1743,16 @@ module.exports = /******/ (function(modules, runtime) {
       async function install(artifactPath) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
-          process_1.chdir(os_1.tmpdir());
-          const targetPath = path.join(".local", "otp");
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const erlRoot = path.join(process_1.env.HOME, targetPath);
-          io_1.mkdirP(targetPath);
-          io_1.mkdirP(erlRoot);
+          const homePath = process_1.env.HOME;
+          const targetPath = path.join(".local", "otp");
+          const erlRootPath = path.join(homePath, targetPath);
+          process_1.chdir(homePath);
+          io_1.mkdirP(erlRootPath);
           await exec_1.exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
           await exec_1.exec("ls", ["-l", targetPath]);
-          await exec_1.exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);
-          return erlRoot;
+          await exec_1.exec(path.join(targetPath, "Install"), ["-minimal", erlRootPath]);
+          return erlRootPath;
         } finally {
           process_1.chdir(currentWorkingDiretcory);
         }

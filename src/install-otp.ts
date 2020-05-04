@@ -91,16 +91,16 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
 async function install(artifactPath: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
   try {
-    chdir(tmpdir());
-    const targetPath = path.join(".local", "otp");
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const erlRoot = path.join(env.HOME!, targetPath);
-    mkdirP(targetPath);
-    mkdirP(erlRoot);
+    const homePath = env.HOME!;
+    const targetPath = path.join(".local", "otp");
+    const erlRootPath = path.join(homePath, targetPath);
+    chdir(homePath);
+    mkdirP(erlRootPath);
     await exec("tar", ["zxf", artifactPath, "-C", targetPath, "--strip-components=1"]);
     await exec("ls", ["-l", targetPath]);
-    await exec(path.join(targetPath, "Install"), ["-minimal", erlRoot]);
-    return erlRoot;
+    await exec(path.join(targetPath, "Install"), ["-minimal", erlRootPath]);
+    return erlRootPath;
   } finally {
     chdir(currentWorkingDiretcory);
   }
