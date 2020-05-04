@@ -76,10 +76,13 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     //
     // Make tar
     //
-    const target = "x86_64-unknown-linux-gnu";
-    await exec("tar", ["-zcf", "release.tar.gz", `release/${target}/`]);
+    const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
+    const targetDirectoryName = "x86_64-unknown-linux-gnu";
+    // To compress files in the directory easily, enter the directory
+    chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));
+    await exec("tar", ["-zcf", outputTarPath, "."]);
 
-    return path.join(compileRootDirectoryPath, "release.tar.gz");
+    return outputTarPath;
   } finally {
     chdir(currentWorkingDiretcory);
   }

@@ -1730,9 +1730,12 @@ module.exports = /******/ (function(modules, runtime) {
           //
           // Make tar
           //
-          const target = "x86_64-unknown-linux-gnu";
-          await exec_1.exec("tar", ["-zcf", "release.tar.gz", `release/${target}/`]);
-          return path.join(compileRootDirectoryPath, "release.tar.gz");
+          const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
+          const targetDirectoryName = "x86_64-unknown-linux-gnu";
+          // To compress files in the directory easily, enter the directory
+          process_1.chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));
+          await exec_1.exec("tar", ["-zcf", outputTarPath, "."]);
+          return outputTarPath;
         } finally {
           process_1.chdir(currentWorkingDiretcory);
         }
