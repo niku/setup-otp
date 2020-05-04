@@ -78,6 +78,7 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     //
     const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
     const targetDirectoryName = "x86_64-unknown-linux-gnu";
+    await exec("ls", ["-l", "release"]);
     // To compress files in the directory easily, enter the directory
     chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));
     await exec("tar", ["-zcf", outputTarPath, "."]);
@@ -105,7 +106,7 @@ async function install(artifactPath: string): Promise<string> {
   }
 }
 
-export async function installOTP(spec: string): Promise<string> {
+export async function installOTP(spec: string): Promise<void> {
   const versionsTextPath = await group("downloadVersionsText", async () => {
     return await downloadVersionsText();
   });
@@ -150,5 +151,5 @@ export async function installOTP(spec: string): Promise<string> {
     return install(artifactPath);
   });
   addPath(path.join(installedPath, "bin"));
-  return installedPath;
+  return;
 }

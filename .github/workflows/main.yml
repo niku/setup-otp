@@ -4,8 +4,13 @@ on: [push]
 
 jobs:
   setup-otp:
-    runs-on: ubuntu-latest
     name: A job to setup otp
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
       # To use this repository's private action, you must check out the repository
       - name: Checkout

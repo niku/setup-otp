@@ -1732,6 +1732,7 @@ module.exports = /******/ (function(modules, runtime) {
           //
           const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
           const targetDirectoryName = "x86_64-unknown-linux-gnu";
+          await exec_1.exec("ls", ["-l", "release"]);
           // To compress files in the directory easily, enter the directory
           process_1.chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));
           await exec_1.exec("tar", ["-zcf", outputTarPath, "."]);
@@ -1801,7 +1802,7 @@ module.exports = /******/ (function(modules, runtime) {
           return install(artifactPath);
         });
         core_1.addPath(path.join(installedPath, "bin"));
-        return installedPath;
+        return;
       }
       exports.installOTP = installOTP;
 
