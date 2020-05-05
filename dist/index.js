@@ -1719,7 +1719,22 @@ module.exports = /******/ (function(modules, runtime) {
           //
           // Configure
           //
-          const sslOption = os_1.platform() === "darwin" ? '--with-ssl="$(brew --prefix openssl)"' : "--with-ssl";
+          let sslOption;
+          switch (os_1.platform()) {
+            case "darwin":
+              let opensslPath = "";
+              await exec_1.exec("brew", ["--prefix", "openssl"], {
+                listeners: {
+                  stdout: data => {
+                    opensslPath += data.toString();
+                  }
+                }
+              });
+              sslOption = `--with-ssl=${opensslPath}`;
+              break;
+            default:
+              sslOption = "--with-ssl";
+          }
           await exec_1.exec("./otp_build", ["autoconf"]);
           await exec_1.exec("./configure", [sslOption, "--enable-dirty-schedulers"]);
           //

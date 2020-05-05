@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { cwd, chdir, env } from "process";
 import { cpus, platform } from "os";
+import { deflate } from "zlib";
 
 export class VersionDidNotMatch extends Error {
   constructor(candidateVersions: string[], specifiedVersion: string) {
@@ -63,7 +64,22 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     //
     // Configure
     //
-    const sslOption = platform() === "darwin" ? '--with-ssl="$(brew --prefix openssl)"' : "--with-ssl";
+    let sslOption;
+    switch (platform()) {
+      case "darwin":
+        let opensslPath = "";
+        await exec("brew", ["--prefix", "openssl"], {
+          listeners: {
+            stdout: (data: Buffer): void => {
+              opensslPath += data.toString();
+            }
+          }
+        });
+        sslOption = `--with-ssl=${opensslPath}`;
+        break;
+      default:
+        sslOption = "--with-ssl";
+    }
     await exec("./otp_build", ["autoconf"]);
     await exec("./configure", [sslOption, "--enable-dirty-schedulers"]);
 
