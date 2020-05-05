@@ -1669,27 +1669,21 @@ module.exports = /******/ (function(modules, runtime) {
       const path = __importStar(__webpack_require__(622));
       const process_1 = __webpack_require__(765);
       const os_1 = __webpack_require__(87);
-      class VersionDidNotMatch extends Error {
+      class OTPVersionDidNotMatch extends Error {
         constructor(candidateVersions, specifiedVersion) {
           const candidates = candidateVersions.map(candidateVersion => `"${candidateVersion}"`).join(",");
           const message = `Specified version "${specifiedVersion}" is not matched in ${candidates}.`;
           super(message);
         }
       }
-      exports.VersionDidNotMatch = VersionDidNotMatch;
-      async function downloadVersionsText() {
-        return tool_cache_1.downloadTool("https://raw.githubusercontent.com/erlang/otp/master/otp_versions.table");
-      }
-      async function readText(path) {
-        return fs.promises.readFile(path, "utf8");
-      }
-      function parseVersions(versionsText) {
-        return versionsText
+      exports.OTPVersionDidNotMatch = OTPVersionDidNotMatch;
+      function parseOTPVersionsTable(otpVersionsTableText) {
+        return otpVersionsTableText
           .trim()
           .split("\n")
           .map(line => {
             const matched = line.match(/^OTP-([\.\d]+)/);
-            if (matched == null) {
+            if (matched === null) {
               return undefined;
             } else {
               return matched[1];
@@ -1697,13 +1691,7 @@ module.exports = /******/ (function(modules, runtime) {
           })
           .filter(x => x);
       }
-      function getReleasedVersion(versions, version) {
-        return versions.find(v => v === version);
-      }
-      async function downloadTarGz(version) {
-        return tool_cache_1.downloadTool(`https://github.com/erlang/otp/archive/OTP-${version}.tar.gz`);
-      }
-      function ensureCompileRootDirectoryPath(extractedDirectoryPath, version) {
+      function ensureCompileWorkingDirectoryPath(extractedDirectoryPath, version) {
         const compileRootDirectoryName = `otp-OTP-${version}`;
         const compileRootDirectoryPath = path.join(extractedDirectoryPath, compileRootDirectoryName);
         if (fs.existsSync(compileRootDirectoryPath)) {
@@ -1712,53 +1700,50 @@ module.exports = /******/ (function(modules, runtime) {
           throw new Error(`Expect a directory ${compileRootDirectoryPath} exists, but it doesn't.`);
         }
       }
-      async function compile(compileRootDirectoryPath) {
+      async function makeArtifact(compileWorkingDirectoryPath, releaseFileName) {
         const currentWorkingDiretcory = process_1.cwd();
+        const releaseFilePath = path.join(compileWorkingDirectoryPath, releaseFileName);
         try {
-          process_1.chdir(compileRootDirectoryPath);
-          //
-          // Configure
-          //
-          let sslOption;
-          switch (os_1.platform()) {
-            case "darwin":
-              let opensslPath = "";
-              await exec_1.exec("brew", ["--prefix", "openssl"], {
-                listeners: {
-                  stdout: data => {
-                    opensslPath += data.toString();
+          process_1.chdir(compileWorkingDirectoryPath);
+          await core_1.group("Configure", async () => {
+            let sslOption;
+            switch (os_1.platform()) {
+              case "darwin":
+                let opensslPath = "";
+                await exec_1.exec("brew", ["--prefix", "openssl"], {
+                  listeners: {
+                    stdout: data => {
+                      opensslPath += data.toString();
+                    }
                   }
-                }
-              });
-              sslOption = `--with-ssl=${opensslPath.trim()}`;
-              break;
-            default:
-              sslOption = "--with-ssl";
-          }
-          await exec_1.exec("./otp_build", ["autoconf"]);
-          await exec_1.exec("./configure", [sslOption, "--enable-dirty-schedulers"]);
-          //
-          // Make release
-          //
-          const cpuCount = os_1.cpus().length;
-          await exec_1.exec("make", [`-j${cpuCount}`]);
-          await exec_1.exec("make", ["release"]);
-          //
-          // Make tar
-          //
-          const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
-          let targetDirectoryName = "";
-          await exec_1.exec("ls", ["release"], {
-            listeners: {
-              stdout: data => {
-                targetDirectoryName += data.toString();
-              }
+                });
+                sslOption = `--with-ssl=${opensslPath.trim()}`;
+                break;
+              default:
+                sslOption = "--with-ssl";
             }
+            await exec_1.exec("./otp_build", ["autoconf"]);
+            await exec_1.exec("./configure", [sslOption, "--enable-dirty-schedulers"]);
           });
-          // To compress files in the directory easily, enter the directory
-          process_1.chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName.trim()));
-          await exec_1.exec("tar", ["-zcf", outputTarPath, "."]);
-          return outputTarPath;
+          await core_1.group("Make release", async () => {
+            const cpuCount = os_1.cpus().length;
+            await exec_1.exec("make", [`-j${cpuCount}`]);
+            await exec_1.exec("make", ["release"]);
+          });
+          await core_1.group("Make release artifact as tar", async () => {
+            let targetDirectoryName = "";
+            await exec_1.exec("ls", ["release"], {
+              listeners: {
+                stdout: data => {
+                  targetDirectoryName += data.toString();
+                }
+              }
+            });
+            // To compress files in the release directory easily, enter the directory
+            process_1.chdir(path.join(compileWorkingDirectoryPath, "release", targetDirectoryName.trim()));
+            return await exec_1.exec("tar", ["-zcf", releaseFilePath, "."]);
+          });
+          return releaseFilePath;
         } finally {
           process_1.chdir(currentWorkingDiretcory);
         }
@@ -1779,47 +1764,45 @@ module.exports = /******/ (function(modules, runtime) {
           process_1.chdir(currentWorkingDiretcory);
         }
       }
-      async function installOTP(spec) {
-        const versionsTextPath = await core_1.group("downloadVersionsText", async () => {
-          return await downloadVersionsText();
-        });
-        const versionsText = await core_1.group("readText", async () => {
-          core_1.info(`Parameter: ${versionsTextPath}`);
-          return await readText(versionsTextPath);
-        });
-        const versions = await core_1.group("parseVersions", async () => {
-          core_1.info(`Paramter: ${versionsText}`);
-          return parseVersions(versionsText);
-        });
-        const version = await core_1.group("getReleasedVersion", async () => {
-          core_1.info(`Parameter: ${versions},${spec}`);
-          return getReleasedVersion(versions, spec);
-        });
-        if (!version) {
-          throw new VersionDidNotMatch(versions, spec);
+      async function installOTP(versionSpec) {
+        const cacheKeyName = "otp-release";
+        const releaseFileName = "release.tar.gz";
+        let cachedOTPReleasePath;
+        cachedOTPReleasePath = tool_cache_1.find(cacheKeyName, versionSpec);
+        core_1.info(
+          cachedOTPReleasePath
+            ? `The cache otp-release version ${versionSpec} is found at ${cachedOTPReleasePath}.`
+            : `The cache otp-release version ${versionSpec} is not found.`
+        );
+        if (!cachedOTPReleasePath) {
+          const compileWorkingDirectoryPath = await core_1.group("Setup for compile", async () => {
+            const otpVersionsTableTextFilePath = await tool_cache_1.downloadTool(
+              "https://raw.githubusercontent.com/erlang/otp/master/otp_versions.table"
+            );
+            const otpVersionsTableText = await fs.promises.readFile(otpVersionsTableTextFilePath, "utf8");
+            const otpVersions = parseOTPVersionsTable(otpVersionsTableText);
+            const otpVersion = otpVersions.find(v => v === versionSpec);
+            if (!otpVersion) {
+              throw new OTPVersionDidNotMatch(otpVersions, versionSpec);
+            }
+            const downloadedFilePath = await tool_cache_1.downloadTool(
+              `https://github.com/erlang/otp/archive/OTP-${otpVersion}.tar.gz`
+            );
+            const extractedDirectoryPath = await tool_cache_1.extractTar(downloadedFilePath);
+            return ensureCompileWorkingDirectoryPath(extractedDirectoryPath, otpVersion);
+          });
+          const compiledOTPReleaseArtifactPath = await core_1.group("Make OTP release artifact", async () => {
+            return await makeArtifact(compileWorkingDirectoryPath, releaseFileName);
+          });
+          cachedOTPReleasePath = await tool_cache_1.cacheFile(
+            compiledOTPReleaseArtifactPath,
+            releaseFileName,
+            cacheKeyName,
+            versionSpec
+          );
         }
-        const tarGzPath = await core_1.group("downloadTarGz", async () => {
-          core_1.info(`Parameter: ${version}`);
-          return await downloadTarGz(version);
-        });
-        const extractedDirectoryPath = await core_1.group("extractTar", async () => {
-          core_1.info(`Parameter: ${tarGzPath}`);
-          return await tool_cache_1.extractTar(tarGzPath);
-        });
-        const compileRootDirectoryPath = await core_1.group("ensureCompileRootDirectoryPath", async () => {
-          core_1.info(`Parameter: ${extractedDirectoryPath}, version`);
-          return ensureCompileRootDirectoryPath(extractedDirectoryPath, version);
-        });
-        const compiledArtifactPath = await core_1.group("compile", async () => {
-          core_1.info(`Parameter: ${compileRootDirectoryPath}`);
-          return await compile(compileRootDirectoryPath);
-        });
-        const cachedArtifactDirectoryPath = await core_1.group("cacheFile", async () => {
-          core_1.info(`Parameter: ${compiledArtifactPath}, "release.tar.gz", "otp", ${version}`);
-          return await tool_cache_1.cacheFile(compiledArtifactPath, "release.tar.gz", "otp", version);
-        });
-        const installedPath = await core_1.group("install", async () => {
-          const artifactPath = path.join(cachedArtifactDirectoryPath, "release.tar.gz");
+        const installedPath = await core_1.group("Install", async () => {
+          const artifactPath = path.join(cachedOTPReleasePath, releaseFileName);
           core_1.info(`Parameter: ${artifactPath}`);
           return install(artifactPath);
         });
