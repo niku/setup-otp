@@ -1747,15 +1747,16 @@ module.exports = /******/ (function(modules, runtime) {
           // Make tar
           //
           const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
-          const targetDirectoryName =
-            os_1.platform() === "linux"
-              ? "x86_64-unknown-linux-gnu"
-              : os_1.platform() === "darwin"
-              ? "darwin"
-              : "windows";
-          await exec_1.exec("ls", ["-l", "release"]);
+          let targetDirectoryName = "";
+          await exec_1.exec("ls", ["release"], {
+            listeners: {
+              stdout: data => {
+                targetDirectoryName += data.toString();
+              }
+            }
+          });
           // To compress files in the directory easily, enter the directory
-          process_1.chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));
+          process_1.chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName.trim()));
           await exec_1.exec("tar", ["-zcf", outputTarPath, "."]);
           return outputTarPath;
         } finally {
