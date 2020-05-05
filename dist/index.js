@@ -1270,7 +1270,6 @@ module.exports = /******/ (function(modules, runtime) {
       async function run() {
         try {
           const otpVersion = core_1.getInput("otp-version");
-          core_1.debug(`Starting: installOTP(${otpVersion})`);
           await install_otp_1.installOTP(otpVersion);
         } catch (error) {
           core_1.setFailed(error.message);
@@ -1776,6 +1775,10 @@ module.exports = /******/ (function(modules, runtime) {
         );
         if (!cachedOTPReleasePath) {
           const compileWorkingDirectoryPath = await core_1.group("Setup for compile", async () => {
+            if (os_1.platform() === "darwin") {
+              // wxWidgets is needed to compile wx module in erlang.
+              exec_1.exec("brew", ["install", "wxmac"]);
+            }
             const otpVersionsTableTextFilePath = await tool_cache_1.downloadTool(
               "https://raw.githubusercontent.com/erlang/otp/master/otp_versions.table"
             );

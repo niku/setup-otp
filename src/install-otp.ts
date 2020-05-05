@@ -1,4 +1,4 @@
-import { info, group, addPath, debug } from "@actions/core";
+import { info, group, addPath } from "@actions/core";
 import { exec } from "@actions/exec";
 import { mkdirP } from "@actions/io";
 import { downloadTool, extractTar, cacheFile, find } from "@actions/tool-cache";
@@ -121,6 +121,10 @@ export async function installOTP(versionSpec: string): Promise<void> {
   );
   if (!cachedOTPReleasePath) {
     const compileWorkingDirectoryPath = await group("Setup for compile", async () => {
+      if (platform() === "darwin") {
+        // wxWidgets is needed to compile wx module in erlang.
+        exec("brew", ["install", "wxmac"]);
+      }
       const otpVersionsTableTextFilePath = await downloadTool(
         "https://raw.githubusercontent.com/erlang/otp/master/otp_versions.table"
       );
