@@ -1730,7 +1730,7 @@ module.exports = /******/ (function(modules, runtime) {
                   }
                 }
               });
-              sslOption = `--with-ssl=${opensslPath}`;
+              sslOption = `--with-ssl=${opensslPath.trim()}`;
               break;
             default:
               sslOption = "--with-ssl";

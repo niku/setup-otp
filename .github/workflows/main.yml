@@ -19,7 +19,7 @@ jobs:
         uses: ./ # Uses an action in the root directory
         id: setup-otp
         with:
-          otp-version: "22.3"
+          otp-version: "22.3.3"
       - name: Show self otp version to check the otp setuped correctly
         # Show which erl command and otp major version. If the setup failed following command will also fail.
         run: |

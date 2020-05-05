@@ -75,7 +75,7 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
             }
           }
         });
-        sslOption = `--with-ssl=${opensslPath}`;
+        sslOption = `--with-ssl=${opensslPath.trim()}`;
         break;
       default:
         sslOption = "--with-ssl";
