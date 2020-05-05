@@ -1791,21 +1791,15 @@ module.exports = /******/ (function(modules, runtime) {
             const extractedDirectoryPath = await tool_cache_1.extractTar(downloadedFilePath);
             return ensureCompileWorkingDirectoryPath(extractedDirectoryPath, otpVersion);
           });
-          const compiledOTPReleaseArtifactPath = await core_1.group("Make OTP release artifact", async () => {
-            return await makeArtifact(compileWorkingDirectoryPath, releaseFileName);
-          });
+          const compiledArtifactPath = await makeArtifact(compileWorkingDirectoryPath, releaseFileName);
           cachedOTPReleasePath = await tool_cache_1.cacheFile(
-            compiledOTPReleaseArtifactPath,
+            compiledArtifactPath,
             releaseFileName,
             cacheKeyName,
             versionSpec
           );
         }
-        const installedPath = await core_1.group("Install", async () => {
-          const artifactPath = path.join(cachedOTPReleasePath, releaseFileName);
-          core_1.info(`Parameter: ${artifactPath}`);
-          return install(artifactPath);
-        });
+        const installedPath = await install(path.join(cachedOTPReleasePath, releaseFileName));
         core_1.addPath(path.join(installedPath, "bin"));
         return;
       }

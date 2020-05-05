@@ -1,4 +1,4 @@
-import { info, group, addPath } from "@actions/core";
+import { info, group, addPath, debug } from "@actions/core";
 import { exec } from "@actions/exec";
 import { mkdirP } from "@actions/io";
 import { downloadTool, extractTar, cacheFile, find } from "@actions/tool-cache";
@@ -134,16 +134,10 @@ export async function installOTP(versionSpec: string): Promise<void> {
       const extractedDirectoryPath = await extractTar(downloadedFilePath);
       return ensureCompileWorkingDirectoryPath(extractedDirectoryPath, otpVersion);
     });
-    const compiledOTPReleaseArtifactPath = await group("Make OTP release artifact", async () => {
-      return await makeArtifact(compileWorkingDirectoryPath, releaseFileName);
-    });
-    cachedOTPReleasePath = await cacheFile(compiledOTPReleaseArtifactPath, releaseFileName, cacheKeyName, versionSpec);
+    const compiledArtifactPath = await makeArtifact(compileWorkingDirectoryPath, releaseFileName);
+    cachedOTPReleasePath = await cacheFile(compiledArtifactPath, releaseFileName, cacheKeyName, versionSpec);
   }
-  const installedPath = await group("Install", async () => {
-    const artifactPath = path.join(cachedOTPReleasePath, releaseFileName);
-    info(`Parameter: ${artifactPath}`);
-    return install(artifactPath);
-  });
+  const installedPath = await install(path.join(cachedOTPReleasePath, releaseFileName));
   addPath(path.join(installedPath, "bin"));
   return;
 }
