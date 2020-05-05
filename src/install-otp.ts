@@ -5,7 +5,7 @@ import { downloadTool, extractTar, cacheFile } from "@actions/tool-cache";
 import * as fs from "fs";
 import * as path from "path";
 import { cwd, chdir, env } from "process";
-import { cpus } from "os";
+import { cpus, platform } from "os";
 
 export class VersionDidNotMatch extends Error {
   constructor(candidateVersions: string[], specifiedVersion: string) {
@@ -63,8 +63,9 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     //
     // Configure
     //
+    const sslOption = platform() === "darwin" ? '--with-ssl="$(brew --prefix openssl)"' : "--with-ssl";
     await exec("./otp_build", ["autoconf"]);
-    await exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+    await exec("./configure", [sslOption, "--enable-dirty-schedulers"]);
 
     //
     // Make release
@@ -77,7 +78,8 @@ async function compile(compileRootDirectoryPath: string): Promise<string> {
     // Make tar
     //
     const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
-    const targetDirectoryName = "x86_64-unknown-linux-gnu";
+    const targetDirectoryName =
+      platform() === "linux" ? "x86_64-unknown-linux-gnu" : platform() === "darwin" ? "darwin" : "windows";
     await exec("ls", ["-l", "release"]);
     // To compress files in the directory easily, enter the directory
     chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));

@@ -1719,8 +1719,9 @@ module.exports = /******/ (function(modules, runtime) {
           //
           // Configure
           //
+          const sslOption = os_1.platform() === "darwin" ? '--with-ssl="$(brew --prefix openssl)"' : "--with-ssl";
           await exec_1.exec("./otp_build", ["autoconf"]);
-          await exec_1.exec("./configure", ["--with-ssl", "--enable-dirty-schedulers"]);
+          await exec_1.exec("./configure", [sslOption, "--enable-dirty-schedulers"]);
           //
           // Make release
           //
@@ -1731,7 +1732,12 @@ module.exports = /******/ (function(modules, runtime) {
           // Make tar
           //
           const outputTarPath = path.join(compileRootDirectoryPath, "release.tar.gz");
-          const targetDirectoryName = "x86_64-unknown-linux-gnu";
+          const targetDirectoryName =
+            os_1.platform() === "linux"
+              ? "x86_64-unknown-linux-gnu"
+              : os_1.platform() === "darwin"
+              ? "darwin"
+              : "windows";
           await exec_1.exec("ls", ["-l", "release"]);
           // To compress files in the directory easily, enter the directory
           process_1.chdir(path.join(compileRootDirectoryPath, "release", targetDirectoryName));
