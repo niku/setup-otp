@@ -119,7 +119,7 @@ export async function installOTP(versionSpec: string): Promise<void> {
       ? `The cache otp-release version ${versionSpec} is found at ${cachedOTPReleasePath}.`
       : `The cache otp-release version ${versionSpec} is not found.`
   );
-  info(findAllVersions(cacheKeyName).join(","));
+  info(`findAllVersions: ${findAllVersions(cacheKeyName).join(",")}`);
   if (!cachedOTPReleasePath) {
     const compileWorkingDirectoryPath = await group("Setup for compile", async () => {
       if (platform() === "darwin") {
@@ -142,6 +142,7 @@ export async function installOTP(versionSpec: string): Promise<void> {
     const compiledArtifactPath = await makeArtifact(compileWorkingDirectoryPath, releaseFileName);
     cachedOTPReleasePath = await cacheFile(compiledArtifactPath, releaseFileName, cacheKeyName, versionSpec);
   }
+  info(`findAllVersions: ${findAllVersions(cacheKeyName).join(",")}`);
   const installedPath = await install(path.join(cachedOTPReleasePath, releaseFileName));
   addPath(path.join(installedPath, "bin"));
   return;

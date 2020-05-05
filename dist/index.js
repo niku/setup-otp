@@ -1773,7 +1773,7 @@ module.exports = /******/ (function(modules, runtime) {
             ? `The cache otp-release version ${versionSpec} is found at ${cachedOTPReleasePath}.`
             : `The cache otp-release version ${versionSpec} is not found.`
         );
-        core_1.info(tool_cache_1.findAllVersions(cacheKeyName).join(","));
+        core_1.info(`findAllVersions: ${tool_cache_1.findAllVersions(cacheKeyName).join(",")}`);
         if (!cachedOTPReleasePath) {
           const compileWorkingDirectoryPath = await core_1.group("Setup for compile", async () => {
             if (os_1.platform() === "darwin") {
@@ -1803,6 +1803,7 @@ module.exports = /******/ (function(modules, runtime) {
             versionSpec
           );
         }
+        core_1.info(`findAllVersions: ${tool_cache_1.findAllVersions(cacheKeyName).join(",")}`);
         const installedPath = await install(path.join(cachedOTPReleasePath, releaseFileName));
         core_1.addPath(path.join(installedPath, "bin"));
         return;
