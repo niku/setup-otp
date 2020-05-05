@@ -1,7 +1,7 @@
 import { info, group, addPath } from "@actions/core";
 import { exec } from "@actions/exec";
 import { mkdirP } from "@actions/io";
-import { downloadTool, extractTar, cacheFile, find } from "@actions/tool-cache";
+import { downloadTool, extractTar, cacheFile, find, findAllVersions } from "@actions/tool-cache";
 import * as fs from "fs";
 import * as path from "path";
 import { cwd, chdir, env } from "process";
@@ -119,6 +119,7 @@ export async function installOTP(versionSpec: string): Promise<void> {
       ? `The cache otp-release version ${versionSpec} is found at ${cachedOTPReleasePath}.`
       : `The cache otp-release version ${versionSpec} is not found.`
   );
+  info(findAllVersions(cacheKeyName).join(","));
   if (!cachedOTPReleasePath) {
     const compileWorkingDirectoryPath = await group("Setup for compile", async () => {
       if (platform() === "darwin") {
