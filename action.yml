@@ -1,9 +1,9 @@
 name: Setup OTP
 description: Set up a specific version of OTP and add the command-line tools to the PATH
-inputs:
-  otp-version:
-    description: Exact version of OTP to use
-    required: true
+# inputs:
+#   otp-version:
+#     description: Exact version of OTP to use
+#     required: true
 runs:
   using: node12
   main: dist/index.js
