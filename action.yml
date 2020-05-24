@@ -1,9 +1,9 @@
 name: Setup OTP
 description: Set up a specific version of OTP and add the command-line tools to the PATH
-# inputs:
-#   otp-version:
-#     description: Exact version of OTP to use
-#     required: true
+inputs:
+  secret-token:
+    description: A secret token to authenticate on behalf of GitHub Actions
+    required: true
 runs:
   using: node12
   main: dist/index.js

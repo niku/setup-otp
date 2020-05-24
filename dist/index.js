@@ -5067,13 +5067,13 @@ module.exports = /******/ (function(modules, runtime) {
       async function run() {
         try {
           const currentWorkingDiretcory = process_1.cwd();
-          const myToken = core_1.getInput("myToken");
+          const secretToken = core_1.getInput("secret-token");
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const [owner, repo] = process_1.env.GITHUB_REPOSITORY.split("/");
           const otpVersion = await getOTPVersion();
           const targetTriple = await getTargetTriple();
           const isExists = await make_precompiled_release_artifact_1.checkExistence(
-            new github_1.GitHub(myToken),
+            new github_1.GitHub(secretToken),
             owner,
             repo,
             otpVersion,

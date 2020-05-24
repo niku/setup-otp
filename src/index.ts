@@ -27,12 +27,12 @@ async function getTargetTriple(): Promise<string> {
 async function run(): Promise<void> {
   try {
     const currentWorkingDiretcory = cwd();
-    const myToken = getInput("myToken");
+    const secretToken = getInput("secret-token");
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const [owner, repo] = (env.GITHUB_REPOSITORY! as string).split("/");
     const otpVersion = await getOTPVersion();
     const targetTriple = await getTargetTriple();
-    const isExists = await checkExistence(new GitHub(myToken), owner, repo, otpVersion, targetTriple);
+    const isExists = await checkExistence(new GitHub(secretToken), owner, repo, otpVersion, targetTriple);
     if (!isExists) {
       await makePrecompiledReleaseArtifact(currentWorkingDiretcory, otpVersion);
     }
