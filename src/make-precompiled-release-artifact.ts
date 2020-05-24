@@ -17,6 +17,7 @@ export async function checkExistence(
     owner,
     repo
   });
+  JSON.stringify(releases);
   releases.forEach(release => info(JSON.stringify(release)));
   return true;
 }
