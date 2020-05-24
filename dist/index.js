@@ -9549,7 +9549,7 @@ module.exports = /******/ (function(modules, runtime) {
           owner,
           repo
         });
-        JSON.stringify(releases);
+        core_1.info(JSON.stringify(releases));
         releases.forEach(release => core_1.info(JSON.stringify(release)));
         return true;
       }
