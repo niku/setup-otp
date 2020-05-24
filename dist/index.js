@@ -5072,12 +5072,11 @@ module.exports = /******/ (function(modules, runtime) {
           const [owner, repo] = process_1.env.GITHUB_REPOSITORY.split("/");
           const otpVersion = await getOTPVersion();
           const targetTriple = await getTargetTriple();
-          const isExists = await make_precompiled_release_artifact_1.checkExistence(
+          const isExists = await make_precompiled_release_artifact_1.ensureRelease(
             new github_1.GitHub(secretToken),
             owner,
             repo,
-            otpVersion,
-            targetTriple
+            otpVersion
           );
           if (!isExists) {
             await make_precompiled_release_artifact_1.makePrecompiledReleaseArtifact(
@@ -9537,23 +9536,32 @@ module.exports = /******/ (function(modules, runtime) {
           return result;
         };
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.makePrecompiledReleaseArtifact = exports.checkExistence = void 0;
+      exports.makePrecompiledReleaseArtifact = exports.ensureRelease = void 0;
       const core_1 = __webpack_require__(470);
       const exec_1 = __webpack_require__(986);
       const fs_1 = __webpack_require__(747);
       const os_1 = __webpack_require__(87);
       const path = __importStar(__webpack_require__(622));
       const process_1 = __webpack_require__(765);
-      async function checkExistence(octokit, owner, repo, otpVersion, targetTriple) {
-        const { data: releases } = await octokit.repos.listReleases({
-          owner,
-          repo
-        });
-        core_1.info(JSON.stringify(releases));
-        releases.forEach(release => core_1.info(JSON.stringify(release)));
-        return true;
+      async function ensureRelease(octokit, owner, repo, tagName) {
+        try {
+          const {
+            data: { id }
+            // eslint-disable-next-line @typescript-eslint/camelcase
+          } = await octokit.repos.createRelease({ owner, repo, tag_name: tagName });
+          return id;
+        } catch (error) {
+          core_1.info(error);
+          const { data: releases } = await octokit.repos.listReleases({
+            owner,
+            repo
+          });
+          const release = releases.find(release => release.tag_name == tagName);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          return release.id;
+        }
       }
-      exports.checkExistence = checkExistence;
+      exports.ensureRelease = ensureRelease;
       async function make(compileWorkingDirectoryPath) {
         const currentWorkingDiretcory = process_1.cwd();
         const releaseRootDirectoryPath = path.join(compileWorkingDirectoryPath, "release");

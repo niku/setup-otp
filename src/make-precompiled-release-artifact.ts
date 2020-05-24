@@ -6,20 +6,23 @@ import { cpus, platform } from "os";
 import * as path from "path";
 import { cwd, chdir } from "process";
 
-export async function checkExistence(
-  octokit: GitHub,
-  owner: string,
-  repo: string,
-  otpVersion: string,
-  targetTriple: string
-): Promise<boolean> {
-  const { data: releases } = await octokit.repos.listReleases({
-    owner,
-    repo
-  });
-  info(JSON.stringify(releases));
-  releases.forEach(release => info(JSON.stringify(release)));
-  return true;
+export async function ensureRelease(octokit: GitHub, owner: string, repo: string, tagName: string): Promise<number> {
+  try {
+    const {
+      data: { id }
+      // eslint-disable-next-line @typescript-eslint/camelcase
+    } = await octokit.repos.createRelease({ owner, repo, tag_name: tagName });
+    return id;
+  } catch (error) {
+    info(error);
+    const { data: releases } = await octokit.repos.listReleases({
+      owner,
+      repo
+    });
+    const release = releases.find(release => release.tag_name == tagName);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return release!.id;
+  }
 }
 
 async function make(compileWorkingDirectoryPath: string): Promise<string> {

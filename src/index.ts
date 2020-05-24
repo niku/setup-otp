@@ -2,7 +2,7 @@ import { setFailed, getInput } from "@actions/core";
 import { exec } from "@actions/exec";
 import { GitHub } from "@actions/github";
 import { cwd, env } from "process";
-import { checkExistence, makePrecompiledReleaseArtifact } from "./make-precompiled-release-artifact";
+import { ensureRelease, makePrecompiledReleaseArtifact } from "./make-precompiled-release-artifact";
 
 async function getOTPVersion(): Promise<string> {
   let buffer = "";
@@ -32,7 +32,7 @@ async function run(): Promise<void> {
     const [owner, repo] = (env.GITHUB_REPOSITORY! as string).split("/");
     const otpVersion = await getOTPVersion();
     const targetTriple = await getTargetTriple();
-    const isExists = await checkExistence(new GitHub(secretToken), owner, repo, otpVersion, targetTriple);
+    const isExists = await ensureRelease(new GitHub(secretToken), owner, repo, otpVersion);
     if (!isExists) {
       await makePrecompiledReleaseArtifact(currentWorkingDiretcory, otpVersion);
     }
