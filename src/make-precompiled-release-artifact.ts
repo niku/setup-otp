@@ -1,11 +1,27 @@
-import { group } from "@actions/core";
+import { group, info } from "@actions/core";
 import { exec } from "@actions/exec";
+import { GitHub } from "@actions/github";
 import { readdirSync } from "fs";
 import { cpus, platform } from "os";
 import * as path from "path";
 import { cwd, chdir } from "process";
 
-async function makeRelease(compileWorkingDirectoryPath: string): Promise<string> {
+export async function checkExistence(
+  octokit: GitHub,
+  owner: string,
+  repo: string,
+  otpVersion: string,
+  targetTriple: string
+): Promise<boolean> {
+  const { data: releases } = await octokit.repos.listReleases({
+    owner,
+    repo
+  });
+  releases.forEach(release => info(JSON.stringify(release)));
+  return true;
+}
+
+async function make(compileWorkingDirectoryPath: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
   const releaseRootDirectoryPath = path.join(compileWorkingDirectoryPath, "release");
   const cpuCount = cpus().length;
@@ -71,10 +87,10 @@ async function archive(releaseRootDirectoryPath: string, otpVersion: string): Pr
   }
 }
 
-export async function makePrecompiledArtifact(
+export async function makePrecompiledReleaseArtifact(
   compileWorkingDirectoryPath: string,
   otpVersion: string
 ): Promise<string> {
-  const releaseRootDirectoryPath = await makeRelease(compileWorkingDirectoryPath);
+  const releaseRootDirectoryPath = await make(compileWorkingDirectoryPath);
   return await archive(releaseRootDirectoryPath, otpVersion);
 }

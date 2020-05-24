@@ -1,7 +1,8 @@
-import { setFailed, info } from "@actions/core";
+import { setFailed, getInput } from "@actions/core";
 import { exec } from "@actions/exec";
-import { cwd } from "process";
-import { makePrecompiledArtifact } from "./make-precompiled-artifact";
+import { GitHub } from "@actions/github";
+import { cwd, env } from "process";
+import { checkExistence, makePrecompiledReleaseArtifact } from "./make-precompiled-release-artifact";
 
 async function getOTPVersion(): Promise<string> {
   let buffer = "";
@@ -13,7 +14,7 @@ async function getOTPVersion(): Promise<string> {
   return buffer.trim();
 }
 
-async function getTarget(): Promise<string> {
+async function getTargetTriple(): Promise<string> {
   let buffer = "";
   await exec("clang", ["-print-target-triple"], {
     listeners: {
@@ -26,10 +27,15 @@ async function getTarget(): Promise<string> {
 async function run(): Promise<void> {
   try {
     const currentWorkingDiretcory = cwd();
+    const myToken = getInput("myToken");
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const [owner, repo] = (env.GITHUB_REPOSITORY! as string).split("/");
     const otpVersion = await getOTPVersion();
-    const target = await getTarget();
-    info(target);
-    // await makePrecompiledArtifact(currentWorkingDiretcory, otpVersion);
+    const targetTriple = await getTargetTriple();
+    const isExists = await checkExistence(new GitHub(myToken), owner, repo, otpVersion, targetTriple);
+    if (!isExists) {
+      await makePrecompiledReleaseArtifact(currentWorkingDiretcory, otpVersion);
+    }
   } catch (error) {
     setFailed(error.message);
   }
