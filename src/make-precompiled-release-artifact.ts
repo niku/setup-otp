@@ -6,23 +6,39 @@ import { cpus, platform } from "os";
 import * as path from "path";
 import { cwd, chdir } from "process";
 
-export async function ensureRelease(octokit: GitHub, owner: string, repo: string, tagName: string): Promise<number> {
-  try {
-    const {
-      data: { id }
-      // eslint-disable-next-line @typescript-eslint/camelcase
-    } = await octokit.repos.createRelease({ owner, repo, tag_name: tagName });
-    return id;
-  } catch (error) {
-    info(error);
-    const { data: releases } = await octokit.repos.listReleases({
-      owner,
-      repo
-    });
-    const release = releases.find(release => release.tag_name == tagName);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return release!.id;
-  }
+export async function getRelease(octokit: GitHub, owner: string, repo: string, tag: string): Promise<number> {
+  const { data: release } = await octokit.repos.getReleaseByTag({
+    owner,
+    repo,
+    tag
+  });
+  return release?.id;
+}
+
+export async function createRelease(octokit: GitHub, owner: string, repo: string, tag: string): Promise<number> {
+  const {
+    data: { id }
+    // eslint-disable-next-line @typescript-eslint/camelcase
+  } = await octokit.repos.createRelease({ owner, repo, tag_name: tag });
+  info(`The new Release(${tag}) is created. id: ${id}.`);
+  return id;
+}
+
+export async function getAsset(
+  octokit: GitHub,
+  owner: string,
+  repo: string,
+  releaseId: number,
+  assetName: string
+): Promise<number | undefined> {
+  const { data: assets } = await octokit.repos.listAssetsForRelease({
+    owner,
+    repo,
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    release_id: releaseId
+  });
+  const result = assets.find(asset => asset.name === assetName);
+  return result?.id;
 }
 
 async function make(compileWorkingDirectoryPath: string): Promise<string> {
@@ -77,24 +93,21 @@ async function archive(releaseRootDirectoryPath: string, otpVersion: string): Pr
       );
     }
     const subDirectory = subDirectories[0];
-    const archivedReleaseArtifactPath = path.join(
+    const archivedReleaseAssetPath = path.join(
       releaseRootDirectoryPath,
       `precompiled-${otpVersion}-${subDirectory}.tar.gz`
     );
 
     // To compress files in the release directory easily, enter the directory
     chdir(subDirectory);
-    await exec("tar", ["-zcf", archivedReleaseArtifactPath, "."]);
-    return archivedReleaseArtifactPath;
+    await exec("tar", ["-zcf", archivedReleaseAssetPath, "."]);
+    return archivedReleaseAssetPath;
   } finally {
     chdir(currentWorkingDiretcory);
   }
 }
 
-export async function makePrecompiledReleaseArtifact(
-  compileWorkingDirectoryPath: string,
-  otpVersion: string
-): Promise<string> {
-  const releaseRootDirectoryPath = await make(compileWorkingDirectoryPath);
-  return await archive(releaseRootDirectoryPath, otpVersion);
+export async function makeReleaseAsset(otpRootDirectoryPath: string, otpVersion: string): Promise<string> {
+  const archivedReleaseAssetPath = await make(otpRootDirectoryPath);
+  return await archive(archivedReleaseAssetPath, otpVersion);
 }
