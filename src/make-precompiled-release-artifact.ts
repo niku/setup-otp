@@ -11,18 +11,20 @@ export async function getRelease(
   owner: string,
   repo: string,
   tag: string
-): Promise<[number, string] | undefined> {
-  const { data: release } = await octokit.repos.getReleaseByTag({
-    owner,
-    repo,
-    tag
-  });
-  if (release) {
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    return [release.id, release.upload_url];
-  } else {
-    return;
-  }
+): Promise<void | [number, string] | undefined> {
+  return octokit.repos
+    .getReleaseByTag({
+      owner,
+      repo,
+      tag
+    })
+    .then(response => {
+      info(JSON.stringify(response));
+      return [response.data.id, response.data.upload_url] as [number, string];
+    })
+    .catch(error => {
+      info(JSON.stringify(error));
+    });
 }
 
 export async function createRelease(

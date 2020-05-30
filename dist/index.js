@@ -9570,17 +9570,19 @@ module.exports = /******/ (function(modules, runtime) {
       const path = __importStar(__webpack_require__(622));
       const process_1 = __webpack_require__(765);
       async function getRelease(octokit, owner, repo, tag) {
-        const { data: release } = await octokit.repos.getReleaseByTag({
-          owner,
-          repo,
-          tag
-        });
-        if (release) {
-          // eslint-disable-next-line @typescript-eslint/camelcase
-          return [release.id, release.upload_url];
-        } else {
-          return;
-        }
+        return octokit.repos
+          .getReleaseByTag({
+            owner,
+            repo,
+            tag
+          })
+          .then(response => {
+            core_1.info(JSON.stringify(response));
+            return [response.data.id, response.data.upload_url];
+          })
+          .catch(error => {
+            core_1.info(JSON.stringify(error));
+          });
       }
       exports.getRelease = getRelease;
       async function createRelease(octokit, owner, repo, tag) {
