@@ -9577,10 +9577,12 @@ module.exports = /******/ (function(modules, runtime) {
             tag
           })
           .then(response => {
+            core_1.info("response");
             core_1.info(JSON.stringify(response));
             return [response.data.id, response.data.upload_url];
           })
           .catch(error => {
+            core_1.info("error");
             core_1.info(JSON.stringify(error));
           });
       }
