@@ -1,27 +1,44 @@
 import { group, info } from "@actions/core";
 import { exec } from "@actions/exec";
 import { GitHub } from "@actions/github";
-import { readdirSync } from "fs";
+import { createReadStream, readdirSync, statSync } from "fs";
 import { cpus, platform } from "os";
 import * as path from "path";
 import { cwd, chdir } from "process";
 
-export async function getRelease(octokit: GitHub, owner: string, repo: string, tag: string): Promise<number> {
+export async function getRelease(
+  octokit: GitHub,
+  owner: string,
+  repo: string,
+  tag: string
+): Promise<[number, string] | undefined> {
   const { data: release } = await octokit.repos.getReleaseByTag({
     owner,
     repo,
     tag
   });
-  return release?.id;
+  if (release) {
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    return [release.id, release.upload_url];
+  } else {
+    return;
+  }
 }
 
-export async function createRelease(octokit: GitHub, owner: string, repo: string, tag: string): Promise<number> {
+export async function createRelease(
+  octokit: GitHub,
+  owner: string,
+  repo: string,
+  tag: string
+): Promise<[number, string]> {
   const {
-    data: { id }
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    data: { id, upload_url }
     // eslint-disable-next-line @typescript-eslint/camelcase
   } = await octokit.repos.createRelease({ owner, repo, tag_name: tag });
   info(`The new Release(${tag}) is created. id: ${id}.`);
-  return id;
+  // eslint-disable-next-line @typescript-eslint/camelcase
+  return [id, upload_url];
 }
 
 export async function getAsset(
@@ -39,6 +56,20 @@ export async function getAsset(
   });
   const result = assets.find(asset => asset.name === assetName);
   return result?.id;
+}
+
+export async function uploadAsset(octokit: GitHub, url: string, name: string, assetPath: string): Promise<void> {
+  const headers = {
+    "content-type": "application/octet-stream",
+    "content-length": statSync(assetPath).size
+  };
+  const data = createReadStream(assetPath);
+  await octokit.repos.uploadReleaseAsset({
+    headers,
+    url,
+    data,
+    name
+  });
 }
 
 async function make(compileWorkingDirectoryPath: string): Promise<string> {
@@ -74,7 +105,7 @@ async function make(compileWorkingDirectoryPath: string): Promise<string> {
   }
 }
 
-async function archive(releaseRootDirectoryPath: string, otpVersion: string): Promise<string> {
+async function archive(releaseRootDirectoryPath: string, assetName: string): Promise<string> {
   const currentWorkingDiretcory = cwd();
 
   try {
@@ -93,10 +124,7 @@ async function archive(releaseRootDirectoryPath: string, otpVersion: string): Pr
       );
     }
     const subDirectory = subDirectories[0];
-    const archivedReleaseAssetPath = path.join(
-      releaseRootDirectoryPath,
-      `precompiled-${otpVersion}-${subDirectory}.tar.gz`
-    );
+    const archivedReleaseAssetPath = path.join(releaseRootDirectoryPath, `${assetName}.tar.gz`);
 
     // To compress files in the release directory easily, enter the directory
     chdir(subDirectory);
@@ -107,7 +135,7 @@ async function archive(releaseRootDirectoryPath: string, otpVersion: string): Pr
   }
 }
 
-export async function makeReleaseAsset(otpRootDirectoryPath: string, otpVersion: string): Promise<string> {
+export async function makeReleaseAsset(otpRootDirectoryPath: string, assetName: string): Promise<string> {
   const archivedReleaseAssetPath = await make(otpRootDirectoryPath);
-  return await archive(archivedReleaseAssetPath, otpVersion);
+  return await archive(archivedReleaseAssetPath, assetName);
 }

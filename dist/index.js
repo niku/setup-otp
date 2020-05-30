@@ -5075,13 +5075,19 @@ module.exports = /******/ (function(modules, runtime) {
           const otpVersion = await getOTPVersion();
           const assetName = await getAssetName();
           const octokit = new github_1.GitHub(secretToken);
+          let release;
           let releaseId;
-          releaseId = await make_precompiled_release_artifact_1.getRelease(octokit, owner, repo, otpVersion);
-          if (releaseId) {
+          let uploadUrl;
+          release = await make_precompiled_release_artifact_1.getRelease(octokit, owner, repo, otpVersion);
+          if (release) {
+            releaseId = release[0];
+            uploadUrl = release[1];
             core_1.info(`The Release(${otpVersion}) exists, id: ${releaseId}.`);
           } else {
-            core_1.info(`The Release(${otpVersion}) doesn't exist, so it will create the new Release.`);
-            releaseId = await make_precompiled_release_artifact_1.createRelease(octokit, owner, repo, otpVersion);
+            core_1.info(`The Release(${otpVersion}) doesn't exist, so it will be created.`);
+            release = await make_precompiled_release_artifact_1.createRelease(octokit, owner, repo, otpVersion);
+            releaseId = release[0];
+            uploadUrl = release[1];
             core_1.info(`The Release(${otpVersion}) is created, id: ${releaseId}.`);
           }
           const assetId = await make_precompiled_release_artifact_1.getAsset(
@@ -5094,13 +5100,14 @@ module.exports = /******/ (function(modules, runtime) {
           if (assetId) {
             core_1.info(`The Asset(${assetName}) exists, id: ${assetId}. Skip creating the new Asset.`);
           } else {
-            core_1.info(`The Asset(${assetName}) doesn't exist, so it will created the new Asset.`);
+            core_1.info(`The Asset(${assetName}) doesn't exist, so it will be created.`);
             const archivedReleaseAssetPath = await make_precompiled_release_artifact_1.makeReleaseAsset(
               process_1.cwd(),
-              otpVersion
+              assetName
             );
             core_1.info(`The Asset(${assetName}) is created, path: ${archivedReleaseAssetPath}`);
-            exec_1.exec("ls", ["-l", archivedReleaseAssetPath]);
+            make_precompiled_release_artifact_1.uploadAsset(octokit, uploadUrl, assetName, archivedReleaseAssetPath);
+            core_1.info(`The Asset(${assetName}) is uploaded.`);
           }
         } catch (error) {
           core_1.setFailed(error.message);
@@ -9554,7 +9561,7 @@ module.exports = /******/ (function(modules, runtime) {
           return result;
         };
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.makeReleaseAsset = exports.getAsset = exports.createRelease = exports.getRelease = void 0;
+      exports.makeReleaseAsset = exports.uploadAsset = exports.getAsset = exports.createRelease = exports.getRelease = void 0;
       const core_1 = __webpack_require__(470);
       const exec_1 = __webpack_require__(986);
       const fs_1 = __webpack_require__(747);
@@ -9567,16 +9574,23 @@ module.exports = /******/ (function(modules, runtime) {
           repo,
           tag
         });
-        return release === null || release === void 0 ? void 0 : release.id;
+        if (release) {
+          // eslint-disable-next-line @typescript-eslint/camelcase
+          return [release.id, release.upload_url];
+        } else {
+          return;
+        }
       }
       exports.getRelease = getRelease;
       async function createRelease(octokit, owner, repo, tag) {
         const {
-          data: { id }
+          // eslint-disable-next-line @typescript-eslint/camelcase
+          data: { id, upload_url }
           // eslint-disable-next-line @typescript-eslint/camelcase
         } = await octokit.repos.createRelease({ owner, repo, tag_name: tag });
         core_1.info(`The new Release(${tag}) is created. id: ${id}.`);
-        return id;
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        return [id, upload_url];
       }
       exports.createRelease = createRelease;
       async function getAsset(octokit, owner, repo, releaseId, assetName) {
@@ -9590,6 +9604,20 @@ module.exports = /******/ (function(modules, runtime) {
         return result === null || result === void 0 ? void 0 : result.id;
       }
       exports.getAsset = getAsset;
+      async function uploadAsset(octokit, url, name, assetPath) {
+        const headers = {
+          "content-type": "application/octet-stream",
+          "content-length": fs_1.statSync(assetPath).size
+        };
+        const data = fs_1.createReadStream(assetPath);
+        await octokit.repos.uploadReleaseAsset({
+          headers,
+          url,
+          data,
+          name
+        });
+      }
+      exports.uploadAsset = uploadAsset;
       async function make(compileWorkingDirectoryPath) {
         const currentWorkingDiretcory = process_1.cwd();
         const releaseRootDirectoryPath = path.join(compileWorkingDirectoryPath, "release");
@@ -9622,7 +9650,7 @@ module.exports = /******/ (function(modules, runtime) {
           process_1.chdir(currentWorkingDiretcory);
         }
       }
-      async function archive(releaseRootDirectoryPath, otpVersion) {
+      async function archive(releaseRootDirectoryPath, assetName) {
         const currentWorkingDiretcory = process_1.cwd();
         try {
           process_1.chdir(releaseRootDirectoryPath);
@@ -9640,10 +9668,7 @@ module.exports = /******/ (function(modules, runtime) {
             );
           }
           const subDirectory = subDirectories[0];
-          const archivedReleaseAssetPath = path.join(
-            releaseRootDirectoryPath,
-            `precompiled-${otpVersion}-${subDirectory}.tar.gz`
-          );
+          const archivedReleaseAssetPath = path.join(releaseRootDirectoryPath, `${assetName}.tar.gz`);
           // To compress files in the release directory easily, enter the directory
           process_1.chdir(subDirectory);
           await exec_1.exec("tar", ["-zcf", archivedReleaseAssetPath, "."]);
@@ -9652,9 +9677,9 @@ module.exports = /******/ (function(modules, runtime) {
           process_1.chdir(currentWorkingDiretcory);
         }
       }
-      async function makeReleaseAsset(otpRootDirectoryPath, otpVersion) {
+      async function makeReleaseAsset(otpRootDirectoryPath, assetName) {
         const archivedReleaseAssetPath = await make(otpRootDirectoryPath);
-        return await archive(archivedReleaseAssetPath, otpVersion);
+        return await archive(archivedReleaseAssetPath, assetName);
       }
       exports.makeReleaseAsset = makeReleaseAsset;
 
