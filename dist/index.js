@@ -9579,11 +9579,11 @@ module.exports = /******/ (function(modules, runtime) {
           .then(response => {
             return [response.data.id, response.data.upload_url];
           })
-          .catch(error => {
-            if ((error === null || error === void 0 ? void 0 : error.status) === 404) {
+          .catch(e => {
+            if ((e === null || e === void 0 ? void 0 : e.status) === 404) {
               return;
             }
-            error(`Unexpected error occured: ${JSON.stringify(error)}`);
+            core_1.error(`Unexpected error occured: ${JSON.stringify(e)}`);
           });
       }
       exports.getRelease = getRelease;

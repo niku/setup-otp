@@ -1,4 +1,4 @@
-import { group, info } from "@actions/core";
+import { group, info, error } from "@actions/core";
 import { exec } from "@actions/exec";
 import { GitHub } from "@actions/github";
 import { createReadStream, readdirSync, statSync } from "fs";
@@ -21,11 +21,11 @@ export async function getRelease(
     .then(response => {
       return [response.data.id, response.data.upload_url] as [number, string];
     })
-    .catch(error => {
-      if (error?.status === 404) {
+    .catch(e => {
+      if (e?.status === 404) {
         return;
       }
-      error(`Unexpected error occured: ${JSON.stringify(error)}`);
+      error(`Unexpected error occured: ${JSON.stringify(e)}`);
     });
 }
 
