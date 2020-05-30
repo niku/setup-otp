@@ -124,7 +124,7 @@ async function archive(releaseRootDirectoryPath: string, assetName: string): Pro
       );
     }
     const subDirectory = subDirectories[0];
-    const archivedReleaseAssetPath = path.join(releaseRootDirectoryPath, `${assetName}.tar.gz`);
+    const archivedReleaseAssetPath = path.join(releaseRootDirectoryPath, assetName);
 
     // To compress files in the release directory easily, enter the directory
     chdir(subDirectory);

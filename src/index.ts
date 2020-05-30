@@ -30,7 +30,8 @@ async function getAssetName(): Promise<string> {
   return buffer
     .trim()
     .toLowerCase()
-    .replace(" ", "-");
+    .replace(" ", "-")
+    .concat(".tar.gz");
 }
 
 async function run(): Promise<void> {

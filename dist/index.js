@@ -5065,7 +5065,8 @@ module.exports = /******/ (function(modules, runtime) {
         return buffer
           .trim()
           .toLowerCase()
-          .replace(" ", "-");
+          .replace(" ", "-")
+          .concat(".tar.gz");
       }
       async function run() {
         try {
@@ -9668,7 +9669,7 @@ module.exports = /******/ (function(modules, runtime) {
             );
           }
           const subDirectory = subDirectories[0];
-          const archivedReleaseAssetPath = path.join(releaseRootDirectoryPath, `${assetName}.tar.gz`);
+          const archivedReleaseAssetPath = path.join(releaseRootDirectoryPath, assetName);
           // To compress files in the release directory easily, enter the directory
           process_1.chdir(subDirectory);
           await exec_1.exec("tar", ["-zcf", archivedReleaseAssetPath, "."]);
