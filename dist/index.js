@@ -9577,13 +9577,13 @@ module.exports = /******/ (function(modules, runtime) {
             tag
           })
           .then(response => {
-            core_1.info("response");
-            core_1.info(JSON.stringify(response));
             return [response.data.id, response.data.upload_url];
           })
           .catch(error => {
-            core_1.info("error");
-            core_1.info(JSON.stringify(error));
+            if ((error === null || error === void 0 ? void 0 : error.status) === 404) {
+              return;
+            }
+            error(`Unexpected error occured: ${JSON.stringify(error)}`);
           });
       }
       exports.getRelease = getRelease;

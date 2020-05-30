@@ -19,13 +19,13 @@ export async function getRelease(
       tag
     })
     .then(response => {
-      info("response");
-      info(JSON.stringify(response));
       return [response.data.id, response.data.upload_url] as [number, string];
     })
     .catch(error => {
-      info("error");
-      info(JSON.stringify(error));
+      if (error?.status === 404) {
+        return;
+      }
+      error(`Unexpected error occured: ${JSON.stringify(error)}`);
     });
 }
 
