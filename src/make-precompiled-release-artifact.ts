@@ -11,22 +11,23 @@ export async function getRelease(
   owner: string,
   repo: string,
   tag: string
-): Promise<void | [number, string] | undefined> {
-  return octokit.repos
-    .getReleaseByTag({
-      owner,
-      repo,
-      tag
-    })
-    .then(response => {
-      return [response.data.id, response.data.upload_url] as [number, string];
-    })
-    .catch(e => {
-      if (e?.status === 404) {
-        return;
-      }
-      error(`Unexpected error occured: ${JSON.stringify(e)}`);
-    });
+): Promise<[number, string] | undefined> {
+  return (
+    octokit.repos
+      .getReleaseByTag({
+        owner,
+        repo,
+        tag
+      })
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      .then(({ data: { id, upload_url } }) => [id, upload_url] as [number, string])
+      .catch(e => {
+        if (e?.status !== 404) {
+          error(`Unexpected error occured: ${JSON.stringify(e)}`);
+        }
+        return undefined;
+      })
+  );
 }
 
 export async function createRelease(

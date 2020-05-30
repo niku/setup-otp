@@ -9570,21 +9570,22 @@ module.exports = /******/ (function(modules, runtime) {
       const path = __importStar(__webpack_require__(622));
       const process_1 = __webpack_require__(765);
       async function getRelease(octokit, owner, repo, tag) {
-        return octokit.repos
-          .getReleaseByTag({
-            owner,
-            repo,
-            tag
-          })
-          .then(response => {
-            return [response.data.id, response.data.upload_url];
-          })
-          .catch(e => {
-            if ((e === null || e === void 0 ? void 0 : e.status) === 404) {
-              return;
-            }
-            core_1.error(`Unexpected error occured: ${JSON.stringify(e)}`);
-          });
+        return (
+          octokit.repos
+            .getReleaseByTag({
+              owner,
+              repo,
+              tag
+            })
+            // eslint-disable-next-line @typescript-eslint/camelcase
+            .then(({ data: { id, upload_url } }) => [id, upload_url])
+            .catch(e => {
+              if ((e === null || e === void 0 ? void 0 : e.status) !== 404) {
+                core_1.error(`Unexpected error occured: ${JSON.stringify(e)}`);
+              }
+              return undefined;
+            })
+        );
       }
       exports.getRelease = getRelease;
       async function createRelease(octokit, owner, repo, tag) {
